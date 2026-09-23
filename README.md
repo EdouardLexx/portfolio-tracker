@@ -2,25 +2,91 @@
 
 Suivi de portefeuille multi-comptes avec valorisation en direct via Yahoo Finance.
 
-## Installation — sans rien installer
+## Installation
 
-Sur la page [Releases](https://github.com/EdouardLexx/portfolio-tracker/releases)
-du dépôt, téléchargez le fichier de votre système et lancez-le :
-l'application s'ouvre dans le navigateur.
+Rien à installer : on télécharge un fichier, on le lance, et l'application
+s'ouvre dans le navigateur.
 
-| Système | Fichier | Lancement |
-|---|---|---|
-| Windows | `…-windows-x64.exe` | double-clic, puis *Informations complémentaires → Exécuter quand même* |
-| Mac Apple Silicon | `…-macos-arm64.zip` | ouvrir le zip, double-clic, puis *Réglages → Confidentialité et sécurité → Ouvrir quand même* |
-| Mac Intel | `…-macos-x64.zip` | idem |
-| Linux | `…-linux-x64.tar.gz` | décompresser, puis `./portfolio-tracker-linux-x64` |
+| Votre ordinateur | Fichier à télécharger |
+|---|---|
+| Windows | [**portfolio-tracker-windows-x64.exe**](https://github.com/EdouardLexx/portfolio-tracker/releases/latest/download/portfolio-tracker-windows-x64.exe) |
+| Mac récent (puce Apple M1, M2, M3…) | [**portfolio-tracker-macos-arm64.zip**](https://github.com/EdouardLexx/portfolio-tracker/releases/latest/download/portfolio-tracker-macos-arm64.zip) |
+| Mac plus ancien (processeur Intel) | [**portfolio-tracker-macos-x64.zip**](https://github.com/EdouardLexx/portfolio-tracker/releases/latest/download/portfolio-tracker-macos-x64.zip) |
+| Linux | [**portfolio-tracker-linux-x64.tar.gz**](https://github.com/EdouardLexx/portfolio-tracker/releases/latest/download/portfolio-tracker-linux-x64.tar.gz) |
 
-Les avertissements de Windows et macOS viennent de ce que l'application n'est
-pas signée. Une fenêtre de terminal reste ouverte pendant l'utilisation : la
-fermer arrête l'application. Les données restent dans le navigateur, sur
-l'ordinateur ; seuls les codes des titres partent vers Yahoo Finance.
+Ces liens mènent toujours à la dernière version. Toutes les versions sont sur la
+page [Releases](https://github.com/EdouardLexx/portfolio-tracker/releases).
 
-**Limite importante** : les ventes ne sont pas encore prises en compte.
+> L'application n'est pas signée (la signature est payante) : Windows et macOS
+> affichent donc un avertissement au premier lancement. Les étapes ci-dessous
+> montrent comment le passer. Le code est public, et ces fichiers sont fabriqués
+> automatiquement par GitHub à partir de ce dépôt.
+
+### Windows
+
+1. Téléchargez [le fichier `.exe`](https://github.com/EdouardLexx/portfolio-tracker/releases/latest/download/portfolio-tracker-windows-x64.exe). Si le
+   navigateur le signale comme rarement téléchargé, choisissez **Conserver**.
+2. Ouvrez votre dossier **Téléchargements** et double-cliquez sur
+   `portfolio-tracker-windows-x64.exe`.
+3. Windows affiche « Windows a protégé votre ordinateur » : cliquez sur
+   **Informations complémentaires**, puis sur **Exécuter quand même**.
+4. Une fenêtre noire s'ouvre, puis l'application apparaît dans votre navigateur.
+   Laissez la fenêtre noire ouverte pendant l'utilisation.
+
+L'avertissement de l'étape 3 n'apparaît qu'au premier lancement.
+
+### macOS
+
+Pour savoir quel fichier prendre : menu Apple (la pomme en haut à gauche) →
+**À propos de ce Mac**. « Puce Apple M… » : prenez la version *arm64*.
+« Processeur Intel » : la version *x64*.
+
+1. Téléchargez le fichier `.zip` correspondant. Safari le décompresse tout seul ;
+   sinon, double-cliquez dessus dans **Téléchargements**.
+2. Double-cliquez sur le fichier extrait (`portfolio-tracker-macos-arm64` ou
+   `-x64`). macOS refuse de l'ouvrir : cliquez sur **Terminé**.
+3. Ouvrez **Réglages Système → Confidentialité et sécurité**, descendez jusqu'au
+   message indiquant que `portfolio-tracker…` a été bloqué, et cliquez sur
+   **Ouvrir quand même**. Confirmez avec votre mot de passe ou Touch ID.
+4. Double-cliquez à nouveau sur le fichier : une fenêtre Terminal s'ouvre, puis
+   l'application apparaît dans votre navigateur. Laissez le Terminal ouvert
+   pendant l'utilisation.
+
+Les étapes 2 et 3 ne sont nécessaires qu'au premier lancement.
+
+### Linux
+
+1. Téléchargez [l'archive `.tar.gz`](https://github.com/EdouardLexx/portfolio-tracker/releases/latest/download/portfolio-tracker-linux-x64.tar.gz).
+2. Dans un terminal, depuis le dossier de téléchargement :
+
+   ```bash
+   tar -xzf portfolio-tracker-linux-x64.tar.gz
+   ./portfolio-tracker-linux-x64
+   ```
+
+3. L'application s'ouvre dans votre navigateur. Si rien ne s'ouvre, allez sur
+   http://127.0.0.1:4719.
+
+### Arrêter, relancer, mettre à jour
+
+- **Arrêter** : fermez la fenêtre noire (Windows) ou le Terminal (macOS), ou
+  faites `Ctrl+C` dans le terminal (Linux).
+- **Relancer** : double-cliquez à nouveau sur le fichier. S'il tourne déjà, cela
+  rouvre simplement l'onglet.
+- **Mettre à jour** : téléchargez la nouvelle version et lancez-la à la place de
+  l'ancienne. Vos données sont conservées.
+
+### Vos données
+
+Tout reste sur votre ordinateur, dans votre navigateur : aucun compte, aucun
+envoi de vos relevés. Seuls les codes des titres (ISIN, symboles) partent vers
+Yahoo Finance pour obtenir les cours. Deux conséquences : **vider les données de
+navigation efface le portefeuille**, et changer de navigateur par défaut repart
+d'un portefeuille vide.
+
+**Limite importante** : les ventes ne sont pas encore prises en compte. Si vous
+avez déjà vendu des titres, les chiffres affichés seront faux. Cet outil ne
+constitue pas un conseil en investissement.
 
 Sources reconnues :
 
