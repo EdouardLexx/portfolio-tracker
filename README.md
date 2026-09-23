@@ -2,6 +2,26 @@
 
 Suivi de portefeuille multi-comptes avec valorisation en direct via Yahoo Finance.
 
+## Installation — sans rien installer
+
+Sur la page [Releases](https://github.com/EdouardLexx/portfolio-tracker/releases)
+du dépôt, téléchargez le fichier de votre système et lancez-le :
+l'application s'ouvre dans le navigateur.
+
+| Système | Fichier | Lancement |
+|---|---|---|
+| Windows | `…-windows-x64.exe` | double-clic, puis *Informations complémentaires → Exécuter quand même* |
+| Mac Apple Silicon | `…-macos-arm64.zip` | ouvrir le zip, double-clic, puis *Réglages → Confidentialité et sécurité → Ouvrir quand même* |
+| Mac Intel | `…-macos-x64.zip` | idem |
+| Linux | `…-linux-x64.tar.gz` | décompresser, puis `./portfolio-tracker-linux-x64` |
+
+Les avertissements de Windows et macOS viennent de ce que l'application n'est
+pas signée. Une fenêtre de terminal reste ouverte pendant l'utilisation : la
+fermer arrête l'application. Les données restent dans le navigateur, sur
+l'ordinateur ; seuls les codes des titres partent vers Yahoo Finance.
+
+**Limite importante** : les ventes ne sont pas encore prises en compte.
+
 Sources reconnues :
 
 | Compte | Format | Fichier |
@@ -45,14 +65,25 @@ Pourcentages et prix unitaires restent visibles, puisqu'ils ne disent pas combie
 on possède. Pratique pour une capture d'écran ; le choix se retient par
 navigateur.
 
-## Lancer
+## Lancer depuis le code
+
+Il faut Node.js 20.19+ ou 22.12+.
 
 ```bash
 npm install
-npm run dev
+npm start         # construit l'app et l'ouvre sur http://127.0.0.1:4719
+npm run dev       # développement : http://localhost:5173, API sur 3001
 ```
 
-L'app est sur http://localhost:5173 (le backend démarre en parallèle sur le port 3001).
+`npm start` sert exactement ce que contient l'exécutable ; `npm run dev` recharge
+à chaud pendant qu'on modifie le code. Les deux adresses sont des origines
+différentes pour le navigateur, donc des données séparées.
+
+`npm run package` fabrique les exécutables des quatre plateformes dans
+`release/` ; il demande [Bun](https://bun.sh), qui sait compiler pour Windows,
+macOS et Linux depuis une seule machine. Publier une version se fait en poussant
+un tag (`git tag v1.0.0 && git push --tags`) : GitHub Actions fabrique les
+exécutables, les lance sur Windows, macOS et Linux, puis crée la release.
 
 ## Architecture
 
@@ -61,10 +92,13 @@ exécution, son compte, sa devise et son montant EUR réel. Les pages, les calcu
 et les graphes ne connaissent que ce modèle — les particularités de chaque
 courtier s'arrêtent à son parseur.
 
-- **`server.js`** — API Express sur Yahoo Finance (`yahoo-finance2`) : résolution
+- **`server/api.js`** — API Express sur Yahoo Finance (`yahoo-finance2`) : résolution
   ISIN → symbole, cours, historiques, taux de change, et le taux du Livret A.
   Tout est mis en cache (1 min pour les cours, 15 min pour les historiques,
   24 h pour la résolution des ISIN et le taux du Livret A).
+- **`server.js`** — point d'entrée de développement : sert l'API sur le port 3001.
+- **`server/standalone.js`** — point d'entrée de l'exécutable : sert l'API et
+  l'interface sur le port 4719, puis ouvre le navigateur.
 - **`src/parsers/`** — un fichier par source : `degiroCsv.ts`, `boursoramaPdf.ts`,
   `ledgerCsv.ts`, `goldManual.ts`, `savingsManual.ts`, et `shared.ts` pour la
   fusion dédupliquée commune.

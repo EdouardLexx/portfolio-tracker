@@ -16,3 +16,5 @@ exports/
 data/
 .env*
 .DS_Store
+build/
+release/

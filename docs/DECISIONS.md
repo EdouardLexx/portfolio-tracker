@@ -272,7 +272,7 @@ sur la performance par compte — voir `docs/TODO.md`.
 ## Serveur limité à la boucle locale, sans CORS
 
 ### Decision
-`server.js` écoute sur `127.0.0.1` uniquement et ne pose aucun en-tête CORS ;
+Le serveur (`server.js`, `server/standalone.js`) écoute sur `127.0.0.1` uniquement et ne pose aucun en-tête CORS ;
 les listes passées en paramètre sont plafonnées et le cache est borné.
 
 ### Reason
@@ -313,3 +313,31 @@ montant à la main, et le texte serait resté lisible dans le DOM.
 Tout nouveau montant doit passer par un formateur qui respecte le drapeau, sinon
 il échappe au mode discret. Les messages d'import (écart de solde du Livret A)
 sont construits dans les parseurs et restent en clair.
+
+## Un exécutable autonome par plateforme, compilé avec Bun
+
+### Decision
+L'application se distribue en un fichier par système (Windows, macOS arm64 et
+x64, Linux), fabriqué par `bun build --compile` et publié sur GitHub Releases
+par la CI. Il embarque le moteur JavaScript, l'API et l'interface, et ouvre le
+navigateur au lancement.
+
+### Reason
+Le public visé ne doit rien installer : ni Node, ni dépendances, ni commande.
+Bun compile pour les quatre cibles depuis une seule machine Linux, et fait
+tourner Express et `yahoo-finance2` sans modification (vérifié : cours,
+recherche par ISIN, historiques).
+
+### Alternatives
+Node SEA : outil officiel, mais sans compilation croisée (un runner par
+système) et exige un unique fichier CommonJS, alors que `yahoo-finance2` est un
+module ESM. Electron : vrai installateur et fenêtre dédiée, mais plus de 100 Mo
+et une maintenance plus lourde. Version hébergée : aucune installation, mais
+Yahoo bloque vite les serveurs cloud, et l'utilisateur deviendrait l'exploitant
+d'un service en ligne.
+
+### Consequence
+Les exécutables ne sont **pas signés** : Windows (SmartScreen) et macOS
+(Gatekeeper) affichent un avertissement au premier lancement, et certains
+antivirus peuvent les signaler à tort. Chaque fichier pèse 65 à 90 Mo. Le port
+4719 devient permanent, puisque les données sont rangées par origine.

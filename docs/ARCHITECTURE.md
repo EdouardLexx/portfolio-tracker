@@ -11,15 +11,19 @@ Application web locale en deux processus, lancés ensemble par `npm run dev` :
 | Vite + React | 5173 | interface, calculs, persistance |
 | Express (`server.js`) | 3001 | proxy Yahoo Finance + taux Livret A, avec cache |
 
-Vite proxifie `/api` vers `:3001` (`vite.config.ts`). **Toute la logique métier
+C'est le mode développement. Vite proxifie `/api` vers `:3001` (`vite.config.ts`).
+L'exécutable et `npm start` réunissent les deux dans un seul processus sur
+`127.0.0.1:4719` (voir *Exécutable* plus bas). **Toute la logique métier
 est côté navigateur** ; le serveur ne fait que relayer des données de marché.
 
 Il n'y a **pas de base de données**. Les données vivent dans le `localStorage`
 du navigateur, donc elles sont propres à une machine et à un navigateur.
 
-## Backend — `server.js`
+## Backend — `server/api.js`
 
-Un fichier, Express 5, cache mémoire par clé avec TTL (`cached(key, ttl, fn)`),
+Les routes vivent dans `server/api.js`, qui exporte l'application Express sans
+l'écouter. Deux points d'entrée la démarrent : `server.js` (développement, port
+3001) et `server/standalone.js` (exécutable, port 4719). Express 5, cache mémoire par clé avec TTL (`cached(key, ttl, fn)`),
 borné à 5 000 entrées. Le serveur n'écoute que sur `127.0.0.1` et n'autorise
 aucune origine croisée : le navigateur passe par le proxy `/api` de Vite. Les
 paramètres de liste (`isins`, `symbols`, `currencies`) sont plafonnés à 100
@@ -195,6 +199,31 @@ Le module porte aussi le drapeau du **mode discret** (`setDiscreet`,
 `isDiscreet`). Quand il est levé, `formatEUR`, `formatCompactEUR`,
 `formatQuantity` et `formatHolding` renvoient `•••` ; `formatNumber`,
 `formatPercent` et `formatMoney` (prix unitaires en devise) sont inchangés.
+
+## Exécutable
+
+`npm run package` enchaîne trois étapes :
+1. `vite build` produit l'interface dans `dist/` ;
+2. `scripts/embed-dist.mjs` la convertit en module JavaScript
+   (`build/embedded-assets.js`, fichiers encodés en base64), en **excluant**
+   tout fichier de données qu'un build local aurait copié depuis `public/` ;
+3. `scripts/package.mjs` compile `server/standalone.js` avec Bun pour
+   Windows x64, macOS arm64 et x64, Linux x64, dans `release/`.
+
+L'interface embarquée en mémoire évite toute API d'asset propre à Bun : le même
+`standalone.js` tourne sous Node (`npm start`) et une fois compilé.
+
+Au lancement, `standalone.js` écoute sur `127.0.0.1:4719` et ouvre le navigateur
+(`start`, `open` ou `xdg-open`). Si le port est pris, il interroge
+`/api/health` : si c'est déjà l'application, il rouvre simplement l'onglet ;
+sinon il affiche l'erreur et attend Entrée, pour qu'une fenêtre ouverte par
+double-clic ne disparaisse pas avant qu'on l'ait lue. `--no-browser` désactive
+l'ouverture (tests en CI).
+
+`.github/workflows/release.yml` : sur un tag `v*`, la CI fabrique les quatre
+exécutables sur Linux, lance ceux de Windows, macOS arm64 et Linux sur leur
+système (réponse de `/api/health` et de la page), puis publie la release avec
+`.github/release-notes.md`. Le binaire macOS Intel n'est pas testé en CI.
 
 ## Gestion de l'état — `src/hooks/usePortfolio.ts`
 

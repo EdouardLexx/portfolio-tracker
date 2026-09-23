@@ -36,7 +36,7 @@ Vérifié dans le code.
 - Historique des imports et réinitialisation.
 
 **Valorisation**
-- Résolution ISIN → symbole en trois niveaux, avec cache (`server.js`).
+- Résolution ISIN → symbole en trois niveaux, avec cache (`server/api.js`).
 - Cours, historiques et taux de change via Yahoo (`src/api/stockApi.ts`).
 - Multi-devises, conversion au taux du jour dans les séries historiques.
 - Cotations synthétiques pour l'or, le Livret A et le cash.
@@ -56,6 +56,12 @@ Vérifié dans le code.
   distribution, projection.
 - Thème clair/sombre mémorisé, graphes inclus.
 - Mode discret mémorisé : montants et quantités masqués, graphes inclus.
+
+**Distribution**
+- Exécutables autonomes Windows, macOS (arm64, x64) et Linux, fabriqués par
+  Bun et publiés par GitHub Actions sur tag `v*`.
+- Linux testé de bout en bout (import, résolution, cours). Windows et macOS
+  arm64 testés en CI au démarrage seulement ; macOS x64 non testé.
 - Responsive vérifié à la main (mobile, tablette, large).
 
 ## In progress

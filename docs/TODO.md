@@ -52,6 +52,16 @@ Fichiers : `src/utils/calculations.ts`, les trois parseurs concernés.
 
 ## 🟡 Medium
 
+### Choisir la cotation de la place d'exécution
+*Bug — affichage.*
+Un ETF irlandais acheté en euros à Amsterdam (`IE00B4L5Y983`, place `XAMS`) est
+résolu vers sa cotation londonienne en dollars (`IWDA.L`). La valeur reste juste
+(même fonds, converti), mais le PRU s'affiche en dollars avec le montant en
+euros. Le CSV DEGIRO donne la place d'exécution : s'en servir pour préférer la
+bonne cotation (`XAMS` → `.AS`, `XPAR` → `.PA`…).
+Fichiers : `server/api.js` (`/api/resolve`, fonction `score`),
+`src/parsers/degiroCsv.ts`.
+
 ### Unifier la clé de position
 *Bug latent.*
 `buildPositions` regroupe par `tx.symbol || tx.isin || tx.productName`, mais
@@ -91,6 +101,12 @@ Aujourd'hui contourné en saisissant le montant réellement payé.
 Protège des valeurs nulles, mais écarterait aussi une journée réellement
 catastrophique.
 Fichier : `src/utils/performance.ts`.
+
+### Signer les exécutables
+*Amélioration — confiance.*
+Sans signature, Windows et macOS avertissent au premier lancement. Signature
+Windows (certificat payant) et notarisation Apple (programme développeur à
+99 $/an) à ajouter dans `.github/workflows/release.yml`.
 
 ## Future ideas
 

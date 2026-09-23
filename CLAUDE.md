@@ -28,18 +28,24 @@ aucun multi-utilisateur.
 
 ## Tech stack
 
-- **Langage** : TypeScript (front), JavaScript (serveur `server.js`).
+- **Langage** : TypeScript (front), JavaScript (serveur `server/`).
 - **Front** : React 19, Vite 8, Tailwind CSS 4, Recharts 2.15.
 - **Back** : Node + Express 5, proxy vers Yahoo Finance (`yahoo-finance2` v4).
 - **Base de données** : aucune. Persistance = `localStorage` du navigateur.
 - **Librairies clés** : `papaparse` (CSV), `pdfjs-dist` (PDF), `recharts`.
-- **Outils** : `oxlint`, `tsc -b`, `concurrently`.
-- **Exécution** : Node via nvm. Front sur `:5173`, API sur `:3001`.
+- **Outils** : `oxlint`, `tsc -b`, `concurrently` ; Bun pour fabriquer les
+  exécutables.
+- **Exécution** : Node via nvm. En développement, front sur `:5173` et API sur
+  `:3001` ; l'exécutable et `npm start` servent tout sur `127.0.0.1:4719`.
 
 ## Project structure
 
 ```
-server.js            API Express (proxy Yahoo + taux Livret A)
+server.js            entrée de développement : l'API sur :3001
+server/api.js        routes Express (proxy Yahoo + taux Livret A)
+server/standalone.js entrée de l'exécutable : API + interface sur :4719
+scripts/             embarquement de dist/ et compilation des exécutables
+.github/workflows/   fabrication, test et publication des exécutables
 public/              statique ; Transactions.csv = amorçage local, ignoré par git
 src/types/           modèle de données unique (Transaction, Position…)
 src/parsers/         un fichier par source + shared.ts (fusion dédupliquée)
@@ -55,6 +61,8 @@ src/components/      graphes et blocs réutilisables
 ```bash
 npm install                 # dépendances
 npm run dev                 # API (3001) + front (5173) ensemble
+npm start                   # build + app complète sur 127.0.0.1:4719
+npm run package             # exécutables des 4 plateformes (demande Bun)
 npm run server              # API seule
 npm run build               # tsc -b && vite build
 npm run lint                # oxlint
@@ -77,7 +85,8 @@ pas chargé).
 4. **Les identifiants de transaction** se construisent avec `makeTransactionId`
    (`src/parsers/shared.ts`) pour hériter de la déduplication.
 5. `usePortfolio` est le seul orchestrateur : état, réseau, persistance.
-6. Le serveur ne fait que **proxy + cache**. Aucune logique métier côté serveur.
+6. Le serveur ne fait que **proxy + cache** (et, dans l'exécutable, servir
+   l'interface). Aucune logique métier côté serveur.
 
 ## Financial/business rules
 
@@ -140,6 +149,11 @@ affichés : vérifier avant de toucher.
   documentation un chiffre, un titre, une date ou un montant issu des données
   réelles de l'utilisateur. Utiliser des exemples fictifs ou des faits publics.
   Aucun `.csv`, `.pdf` ou `.xlsx` ne doit être commité.
+- **Le port 4719 et l'hôte `127.0.0.1` de l'exécutable** : le navigateur range
+  les données par origine, en changer ouvre un portefeuille vide.
+- `scripts/embed-dist.mjs` **exclut les fichiers de données** de `dist/` : sans
+  cela, un build local embarquerait `public/Transactions.csv` dans un
+  exécutable publié. Publier depuis la CI (tag `v*`), jamais depuis le poste.
 
 ## Working instructions for Claude Code
 
