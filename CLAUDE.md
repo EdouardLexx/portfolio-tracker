@@ -82,6 +82,8 @@ pas chargé).
    pour être testables et réutilisables.
 3. **Un parseur par source** dans `src/parsers/`, détection du format **au
    contenu du fichier**, jamais au nom.
+   Toute évolution d'un parseur met à jour la liste des données compatibles
+   (`FILE_SOURCES` dans `src/pages/Data.tsx`) et le tableau du README.
 4. **Les identifiants de transaction** se construisent avec `makeTransactionId`
    (`src/parsers/shared.ts`) pour hériter de la déduplication.
 5. `usePortfolio` est le seul orchestrateur : état, réseau, persistance.

@@ -34,6 +34,8 @@ Vérifié dans le code.
 - Page Données : toutes les transactions groupées par compte, filtre texte,
   sélection multiple et suppression par position (`src/pages/Data.tsx`).
 - Historique des imports et réinitialisation.
+- Page Données : liste des données compatibles et de leurs limites, tenue à
+  jour à la main dans `src/pages/Data.tsx` (`FILE_SOURCES`, `MANUAL_SOURCES`).
 
 **Valorisation**
 - Résolution ISIN → symbole en trois niveaux, avec cache (`server/api.js`).

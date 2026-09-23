@@ -52,6 +52,27 @@ Fichiers : `src/utils/calculations.ts`, les trois parseurs concernés.
 
 ## 🟡 Medium
 
+### Ne pas ranger un compte-titres Boursorama dans DEGIRO
+*Bug — attribution de compte.*
+Un avis d'opéré Boursorama sans la mention « Compte PEA » est attribué au compte
+DEGIRO (`boursoramaPdf.ts`, `account = … ? 'pea' : 'degiro'`). Il faudrait un
+compte « CTO Boursorama » dans `ACCOUNTS`, ou refuser le fichier.
+Fichiers : `src/parsers/boursoramaPdf.ts`, `src/types/index.ts`.
+
+### Reconnaître un relevé Boursorama qui n'est pas le Livret A
+*Bug — attribution de compte.*
+Tout CSV de compte Boursorama (`Date opération` + `Libellé compte`) est traité
+comme le Livret A : un relevé de compte courant y serait additionné. La colonne
+`Libellé compte` permet de vérifier le livret.
+Fichier : `src/parsers/boursoramaAccountCsv.ts`.
+
+### Accepter l'export DEGIRO en anglais
+*Amélioration — portée.*
+La détection exige les en-têtes français (« Date », « Produit ») ; un compte
+DEGIRO réglé en anglais exporte « Product » et le fichier est refusé. Les
+colonnes étant lues par position, reconnaître les deux en-têtes suffirait.
+Fichier : `src/parsers/degiroCsv.ts` (`isDegiroCsv`).
+
 ### Choisir la cotation de la place d'exécution
 *Bug — affichage.*
 Un ETF irlandais acheté en euros à Amsterdam (`IE00B4L5Y983`, place `XAMS`) est

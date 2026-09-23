@@ -90,16 +90,17 @@ constitue pas un conseil en investissement.
 
 Sources reconnues :
 
-| Compte | Format | Fichier |
-|---|---|---|
-| CTO DEGIRO | CSV | export « Transactions » |
-| PEA Boursorama | PDF | avis d'opéré (« OPERATION DE BOURSE »), un par exécution |
-| Crypto Ledger | CSV | export « operations » de Ledger Live |
-| Or physique | saisie manuelle | onglet **Or** : date d'achat + nombre de pièces |
-| Livret A | CSV | export « opérations » Boursorama du livret |
-| Cash (billets) | saisie manuelle | onglet **Épargne** → Cash |
+| Compte | Format | Fichier | À savoir |
+|---|---|---|---|
+| CTO DEGIRO | CSV | export « Transactions » | interface DEGIRO en français ; ventes ignorées |
+| PEA Boursorama | PDF | avis d'opéré (« OPERATION DE BOURSE »), un par exécution | ventes ignorées ; pas encore les avis d'un compte-titres Boursorama |
+| Crypto Ledger | CSV | export « operations » de Ledger Live | réceptions confirmées seulement ; envois ignorés |
+| Livret A | CSV | export « opérations » Boursorama du livret | relevé du Livret A uniquement |
+| Or physique | saisie manuelle | onglet **Or** : pièce, date, nombre, prix payé | Vreneli, Napoléon, Krugerrand |
+| Cash (billets) | saisie manuelle | onglet **Épargne** → Cash | |
 
-Le format est reconnu au contenu du fichier, pas à son nom.
+Le format est reconnu au contenu du fichier, pas à son nom. La même liste
+figure dans l'application, page **Données**.
 
 ## Navigation
 

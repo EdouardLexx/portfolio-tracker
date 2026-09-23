@@ -52,6 +52,121 @@ function AccountBadge({ kind }: { kind: string }) {
   )
 }
 
+/**
+ * What the import accepts today, stated as the parsers implement it: format
+ * detection, account assignment and what gets skipped.
+ */
+const FILE_SOURCES = [
+  {
+    account: 'degiro',
+    source: 'Compte-titres DEGIRO',
+    format: 'CSV',
+    file: 'Export « Transactions », avec l’interface DEGIRO en français.',
+    note: 'Les ventes sont ignorées.',
+  },
+  {
+    account: 'pea',
+    source: 'PEA Boursorama',
+    format: 'PDF',
+    file: 'Avis d’opéré « Opération de bourse », un par exécution ; plusieurs à la fois.',
+    note: 'Les ventes sont ignorées. Les avis d’un compte-titres Boursorama ne sont pas encore gérés.',
+  },
+  {
+    account: 'ledger',
+    source: 'Crypto Ledger Live',
+    format: 'CSV',
+    file: 'Export de l’historique des opérations.',
+    note: 'Seules les réceptions confirmées comptent ; les envois sont ignorés.',
+  },
+  {
+    account: 'savings',
+    source: 'Livret A Boursorama',
+    format: 'CSV',
+    file: 'Relevé des opérations du livret, intérêts compris.',
+    note: 'Uniquement le relevé du Livret A : un autre compte serait compté comme livret.',
+  },
+]
+
+const MANUAL_SOURCES = [
+  {
+    account: 'gold',
+    source: 'Or physique',
+    where: 'onglet Or',
+    what: 'Vreneli, Napoléon ou Krugerrand : date, nombre de pièces, prix payé (facultatif).',
+  },
+  {
+    account: 'savings',
+    source: 'Livret A',
+    where: 'onglet Épargne',
+    what: 'Versements et retraits, puis le solde affiché par la banque, si tu n’importes pas le relevé.',
+  },
+  {
+    account: 'cash',
+    source: 'Cash (billets)',
+    where: 'onglet Épargne',
+    what: 'Entrées et sorties d’argent liquide.',
+  },
+]
+
+const NOT_SUPPORTED_YET =
+  'ventes et retraits de titres, dividendes, autres courtiers, assurance-vie, immobilier, comptes courants.'
+
+function SupportedData() {
+  const rowClass =
+    'py-3 flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-4'
+  const headingClass =
+    'text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400'
+  return (
+    <Card title="Données compatibles pour l'instant">
+      <h4 className={headingClass}>Fichiers à importer ci-dessus</h4>
+      <ul className="divide-y divide-gray-100 dark:divide-gray-800 mb-5">
+        {FILE_SOURCES.map((s) => (
+          <li key={s.source} className={rowClass}>
+            <div className="flex items-center gap-2 sm:w-52 shrink-0">
+              <AccountBadge kind={s.account} />
+              <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                {s.source}
+              </span>
+            </div>
+            <span className="self-start text-xs font-mono px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300">
+              {s.format}
+            </span>
+            <div className="text-sm">
+              <p className="text-gray-700 dark:text-gray-300">{s.file}</p>
+              <p className="text-gray-500 dark:text-gray-400">{s.note}</p>
+            </div>
+          </li>
+        ))}
+      </ul>
+
+      <h4 className={headingClass}>Saisie manuelle</h4>
+      <ul className="divide-y divide-gray-100 dark:divide-gray-800 mb-5">
+        {MANUAL_SOURCES.map((s) => (
+          <li key={s.source} className={rowClass}>
+            <div className="flex items-center gap-2 sm:w-52 shrink-0">
+              <AccountBadge kind={s.account} />
+              <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                {s.source}
+              </span>
+            </div>
+            <p className="text-sm text-gray-700 dark:text-gray-300">
+              <span className="text-gray-500 dark:text-gray-400">{s.where} — </span>
+              {s.what}
+            </p>
+          </li>
+        ))}
+      </ul>
+
+      <p className="text-sm text-gray-500 dark:text-gray-400">
+        <span className="font-medium text-gray-700 dark:text-gray-300">
+          Pas encore pris en charge :
+        </span>{' '}
+        {NOT_SUPPORTED_YET}
+      </p>
+    </Card>
+  )
+}
+
 export function DataPage({
   transactions,
   positions,
@@ -97,10 +212,10 @@ export function DataPage({
     <div className="space-y-6">
       <Card title="Importer des relevés">
         <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-          Dépose un export de transactions <strong>DEGIRO</strong> (.csv) ou un ou
-          plusieurs <strong>avis d'opéré Boursorama</strong> (.pdf) — le compte est
-          reconnu automatiquement. Les lignes déjà enregistrées sont ignorées, donc
-          ré-importer un fichier ne crée jamais de doublon.
+          Dépose un ou plusieurs relevés : le format et le compte sont reconnus
+          au contenu du fichier (la liste est juste en dessous). Les lignes déjà
+          enregistrées sont ignorées, donc ré-importer un fichier ne crée jamais
+          de doublon.
         </p>
 
         <label
@@ -135,7 +250,7 @@ export function DataPage({
               : 'Choisir des fichiers ou les déposer ici'}
           </span>
           <span className="text-xs text-gray-400 dark:text-gray-500">
-            CSV DEGIRO · PDF Boursorama · plusieurs fichiers à la fois
+            CSV DEGIRO, Ledger, Livret A · PDF Boursorama · plusieurs à la fois
           </span>
         </label>
 
@@ -160,6 +275,8 @@ export function DataPage({
           </div>
         )}
       </Card>
+
+      <SupportedData />
 
       {unresolvedIsins.length > 0 && (
         <Card title="Titres non cotés">
