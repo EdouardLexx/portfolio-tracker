@@ -187,8 +187,14 @@ Lecture/écriture `localStorage`, chaque accès protégé par `try/catch`.
 ### `formatters.ts`
 
 `formatEUR`, `formatMoney`, `formatNumber`, `formatQuantity` (décimales
-adaptatives pour la crypto), `formatCompactEUR`, `formatMarketCap`,
-`readableTextOn` (noir ou blanc selon la luminosité d'un fond).
+adaptatives pour la crypto), `formatHolding`, `formatCompactEUR`,
+`formatMarketCap`, `readableTextOn` (noir ou blanc selon la luminosité d'un
+fond).
+
+Le module porte aussi le drapeau du **mode discret** (`setDiscreet`,
+`isDiscreet`). Quand il est levé, `formatEUR`, `formatCompactEUR`,
+`formatQuantity` et `formatHolding` renvoient `•••` ; `formatNumber`,
+`formatPercent` et `formatMoney` (prix unitaires en devise) sont inchangés.
 
 ## Gestion de l'état — `src/hooks/usePortfolio.ts`
 
@@ -217,6 +223,11 @@ le reste du code les traite comme n'importe quelle ligne.
 `useTheme.ts` gère le thème (classe `dark` sur `<html>`, mémorisé) et expose
 `useIsDark()` / `chartTheme(isDark)` : les graphes peignent en SVG et ont besoin
 des couleurs comme **valeurs**, pas comme classes CSS.
+
+`useDiscreet.ts` pilote le mode discret (clé `portfolio.discreet.v1`). Il pose le
+drapeau des formateurs **de façon synchrone**, à l'initialisation et au clic,
+puis déclenche le re-rendu d'`App` : posé dans un effet, le drapeau arriverait
+après le rendu et la page s'afficherait une fois avec l'état précédent.
 
 ## Pages et composants
 

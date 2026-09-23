@@ -39,6 +39,12 @@ navigateur ; à défaut il suit le réglage du système. La couleur de texte par
 défaut est posée sur `body` dans `index.css` : sans cela, tout élément sans
 classe de couleur resterait noir sur fond sombre.
 
+Le **mode discret**, juste au-dessus, remplace par `•••` tout ce qui révèle la
+taille du patrimoine : montants en euros (graphes compris) et quantités détenues.
+Pourcentages et prix unitaires restent visibles, puisqu'ils ne disent pas combien
+on possède. Pratique pour une capture d'écran ; le choix se retient par
+navigateur.
+
 ## Lancer
 
 ```bash
@@ -64,6 +70,7 @@ courtier s'arrêtent à son parseur.
   fusion dédupliquée commune.
 - **`src/hooks/useTheme.ts`** — thème clair/sombre, et les couleurs que les
   graphiques ne peuvent pas prendre via des classes CSS.
+- **`src/hooks/useDiscreet.ts`** — mode discret, mémorisé par navigateur.
 - **`src/utils/store.ts`** — persistance `localStorage` : transactions, historique
   des imports, symboles résolus.
 - **`src/utils/calculations.ts`** — positions, P&L, pondérations, conversion des

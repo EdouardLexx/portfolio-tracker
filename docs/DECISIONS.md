@@ -290,3 +290,26 @@ passer par le front (Vite), qui relaie lui-même vers `127.0.0.1`.
 Appeler l'API depuis une autre machine ou une autre origine ne fonctionne plus,
 volontairement. Le proxy Vite cible `127.0.0.1` et non `localhost`, qui peut se
 résoudre en IPv6.
+
+## Mode discret : masquer la taille, pas la performance
+
+### Decision
+Le mode discret masque les montants en euros et les quantités détenues ; il
+laisse visibles les pourcentages et les prix unitaires. Il est implémenté comme
+un drapeau dans `formatters.ts`, basculé par `useDiscreet`.
+
+### Reason
+Ce qui est sensible, c'est **combien** on possède. Un pourcentage ou un cours
+de marché ne le révèle pas ; une quantité, si, puisque quantité × cours donne le
+montant. Tous les montants passant déjà par `formatters.ts`, un drapeau à cet
+endroit couvre chaque page et chaque graphe sans toucher aux composants.
+
+### Alternatives
+Un contexte React : plus idiomatique, mais aurait imposé de modifier la
+soixantaine d'appels à `formatEUR`. Un flou CSS : il aurait fallu marquer chaque
+montant à la main, et le texte serait resté lisible dans le DOM.
+
+### Consequence
+Tout nouveau montant doit passer par un formateur qui respecte le drapeau, sinon
+il échappe au mode discret. Les messages d'import (écart de solde du Livret A)
+sont construits dans les parseurs et restent en clair.

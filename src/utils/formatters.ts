@@ -1,4 +1,23 @@
+/**
+ * Discreet mode hides what reveals the size of the portfolio: euro amounts and
+ * held quantities. Percentages and unit prices stay, since they say nothing
+ * about how much is owned. A module flag rather than a React context because
+ * every amount already goes through this file; `useDiscreet` sets it before
+ * App re-renders, which repaints every page.
+ */
+let discreet = false
+const MASK = '•••'
+
+export function setDiscreet(on: boolean): void {
+  discreet = on
+}
+
+export function isDiscreet(): boolean {
+  return discreet
+}
+
 export function formatEUR(value: number): string {
+  if (discreet) return `${MASK} €`
   return new Intl.NumberFormat('fr-FR', {
     style: 'currency',
     currency: 'EUR',
@@ -21,6 +40,7 @@ export function formatUSD(value: number): string {
  * decimals to keep a fraction of a coin meaningful.
  */
 export function formatQuantity(value: number): string {
+  if (discreet) return MASK
   if (Number.isInteger(value)) return String(value)
   const decimals = Math.abs(value) < 1 ? 8 : 4
   return new Intl.NumberFormat('fr-FR', {
@@ -58,6 +78,11 @@ export function formatNumber(value: number, decimals = 2): string {
   }).format(value)
 }
 
+/** A plain number that measures a holding (grams owned, sums paid in). */
+export function formatHolding(value: number, decimals = 2): string {
+  return discreet ? MASK : formatNumber(value, decimals)
+}
+
 export function formatMarketCap(value: number): string {
   if (value >= 1e12) return `${(value / 1e12).toFixed(2)} T$`
   if (value >= 1e9) return `${(value / 1e9).toFixed(2)} Md$`
@@ -66,6 +91,7 @@ export function formatMarketCap(value: number): string {
 }
 
 export function formatCompactEUR(value: number): string {
+  if (discreet) return `${MASK} €`
   const fr = (n: number, decimals: number) =>
     new Intl.NumberFormat('fr-FR', {
       minimumFractionDigits: decimals,

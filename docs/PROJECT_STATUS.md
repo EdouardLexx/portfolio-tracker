@@ -55,6 +55,7 @@ Vérifié dans le code.
 - Graphes : TWR vs S&P 500 et Nasdaq 100, valeur en euros, donut étiqueté,
   distribution, projection.
 - Thème clair/sombre mémorisé, graphes inclus.
+- Mode discret mémorisé : montants et quantités masqués, graphes inclus.
 - Responsive vérifié à la main (mobile, tablette, large).
 
 ## In progress

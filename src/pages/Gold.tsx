@@ -2,7 +2,12 @@ import { useState } from 'react'
 import type { Transaction, Position } from '../types'
 import { COIN_SPECS, TROY_OUNCE_GRAMS } from '../types'
 import type { ImportOutcome } from '../hooks/usePortfolio'
-import { formatEUR, formatNumber, formatQuantity } from '../utils/formatters'
+import {
+  formatEUR,
+  formatHolding,
+  formatNumber,
+  formatQuantity,
+} from '../utils/formatters'
 
 interface GoldPageProps {
   transactions: Transaction[]
@@ -219,7 +224,7 @@ export function GoldPage({
               </p>
               <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                 {formatQuantity(p.quantity)} pièces ·{' '}
-                {formatNumber(
+                {formatHolding(
                   p.quantity *
                     (COIN_SPECS.find((c) => c.id === p.key)?.fineGoldGrams ?? 0),
                   1

@@ -18,7 +18,8 @@ Fonctionnalités réellement présentes :
 - valorisation multi-devises via Yahoo Finance ;
 - performance TWR comparée au S&P 500 et au Nasdaq 100 ;
 - courbes de valeur, répartition, frais, projection à 10 ans ;
-- thème clair/sombre.
+- thème clair/sombre ;
+- mode discret : masque montants et quantités, garde les pourcentages.
 
 Utilisateur visé : le propriétaire du portefeuille, seul. Aucune authentification,
 aucun multi-utilisateur.
@@ -116,7 +117,9 @@ affichés : vérifier avant de toucher.
 - Tailwind uniquement ; **toute classe de couleur doit avoir sa variante
   `dark:`**. La couleur de texte par défaut est posée sur `body`
   (`src/index.css`).
-- Montants formatés via `src/utils/formatters.ts`, jamais à la main.
+- Montants formatés via `src/utils/formatters.ts`, jamais à la main : c'est ce
+  qui les soumet au mode discret. Un nombre qui mesure une détention (grammes,
+  sommes versées) passe par `formatHolding`, pas `formatNumber`.
 - `type` importés avec `import type`.
 
 ## Important constraints

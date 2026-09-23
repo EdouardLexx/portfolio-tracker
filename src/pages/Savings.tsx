@@ -2,7 +2,7 @@ import { useState } from 'react'
 import type { Transaction } from '../types'
 import type { ImportOutcome } from '../hooks/usePortfolio'
 import type { SavingsBalance } from '../parsers/savingsManual'
-import { formatEUR, formatNumber } from '../utils/formatters'
+import { formatEUR, formatHolding, formatNumber } from '../utils/formatters'
 
 interface SavingsPageProps {
   transactions: Transaction[]
@@ -214,7 +214,7 @@ export function SavingsPage({
               inputMode="decimal"
               value={balanceInput}
               onChange={(e) => setBalanceInput(e.target.value)}
-              placeholder={formatNumber(paidIn)}
+              placeholder={formatHolding(paidIn)}
               className="w-40 px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-200"
             />
           </label>

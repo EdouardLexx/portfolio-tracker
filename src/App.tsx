@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { usePortfolio, type Scope } from './hooks/usePortfolio'
 import { useTheme } from './hooks/useTheme'
+import { useDiscreet } from './hooks/useDiscreet'
 import { ACCOUNTS, SAVINGS_KINDS } from './types'
 import { WealthPage } from './pages/Wealth'
 import { InvestmentsPage } from './pages/Investments'
@@ -22,6 +23,7 @@ export default function App() {
   const [tab, setTab] = useState<Tab>('wealth')
   const [scope, setScope] = useState<Scope>('all')
   const { isDark, toggle } = useTheme()
+  const { discreet, toggle: toggleDiscreet } = useDiscreet()
 
   const {
     allTransactions,
@@ -245,8 +247,19 @@ export default function App() {
           </nav>
 
           <button
-            onClick={toggle}
+            onClick={toggleDiscreet}
+            aria-pressed={discreet}
             className="mt-auto flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
+          >
+            <span className="w-4 text-center opacity-60">
+              {discreet ? '◍' : '◌'}
+            </span>
+            <span>{discreet ? 'Afficher les montants' : 'Mode discret'}</span>
+          </button>
+
+          <button
+            onClick={toggle}
+            className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
           >
             <span className="w-4 text-center opacity-60">
               {isDark ? '☀' : '☾'}
@@ -261,8 +274,16 @@ export default function App() {
           <nav className="md:hidden flex items-center gap-1 overflow-x-auto bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-4 py-2">
             {TABS.map((t) => navButton(t, true))}
             <button
-              onClick={toggle}
+              onClick={toggleDiscreet}
+              aria-pressed={discreet}
               className="ml-auto px-2 py-1.5 text-gray-500 dark:text-gray-400"
+              title={discreet ? 'Afficher les montants' : 'Mode discret'}
+            >
+              {discreet ? '◍' : '◌'}
+            </button>
+            <button
+              onClick={toggle}
+              className="px-2 py-1.5 text-gray-500 dark:text-gray-400"
               title={isDark ? 'Mode clair' : 'Mode sombre'}
             >
               {isDark ? '☀' : '☾'}
