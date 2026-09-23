@@ -1,0 +1,30 @@
+@import "tailwindcss";
+
+/* The theme follows an explicit choice stored per browser rather than the OS
+   setting alone, so the sidebar toggle actually wins. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Default text colour lives here rather than on every element: anything
+   without an explicit class would otherwise stay near-black in dark mode. */
+body {
+  margin: 0;
+  color: #111827;
+  background-color: #f9fafb;
+}
+
+.dark body {
+  color: #f3f4f6;
+  background-color: #030712;
+}
+
+/* Date pickers and number steppers ship black glyphs; invert them in dark. */
+.dark input[type='date']::-webkit-calendar-picker-indicator,
+.dark input[type='number']::-webkit-inner-spin-button {
+  filter: invert(1) opacity(0.6);
+}

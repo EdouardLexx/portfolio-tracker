@@ -1,0 +1,18 @@
+node_modules
+dist
+*.log
+
+# Données financières personnelles — ne jamais versionner.
+# Le CSV d'amorçage contient l'historique réel des ordres ; l'application
+# démarre simplement vide s'il est absent.
+public/Transactions.csv
+*.csv
+*.pdf
+*.xlsx
+*.xls
+*.ods
+*.json.bak
+exports/
+data/
+.env*
+.DS_Store
