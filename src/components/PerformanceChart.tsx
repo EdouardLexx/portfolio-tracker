@@ -117,9 +117,9 @@ export function PerformanceChart({
             )
           return (
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mb-2 text-sm">
-              {chip('Portefeuille (TWR)', last.portfolio, 'text-blue-600')}
-              {chip('S&P 500', last.sp500, 'text-amber-600')}
-              {chip('Nasdaq 100', last.nasdaq100, 'text-violet-600')}
+              {chip('Portefeuille (TWR)', last.portfolio, 'text-blue-600 dark:text-blue-400')}
+              {chip('S&P 500', last.sp500, 'text-amber-600 dark:text-amber-400')}
+              {chip('Nasdaq 100', last.nasdaq100, 'text-violet-600 dark:text-violet-400')}
             </div>
           )
         })()}

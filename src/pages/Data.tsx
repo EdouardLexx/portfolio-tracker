@@ -249,7 +249,7 @@ export function DataPage({
           }}
           className={`flex flex-col items-center justify-center gap-2 border-2 border-dashed rounded-xl py-10 px-4 cursor-pointer transition-colors ${
             dragging
-              ? 'border-blue-400 bg-blue-50'
+              ? 'border-blue-400 dark:border-blue-500 bg-blue-50 dark:bg-blue-950'
               : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800'
           }`}
         >
@@ -277,9 +277,9 @@ export function DataPage({
             className={`mt-4 rounded-lg px-4 py-3 text-sm ${
               outcome.ok
                 ? outcome.added
-                  ? 'bg-emerald-50 text-emerald-800'
+                  ? 'bg-emerald-50 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300'
                   : 'bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
-                : 'bg-red-50 text-red-700'
+                : 'bg-red-50 dark:bg-red-950 text-red-700 dark:text-red-300'
             }`}
           >
             <p>{outcome.message}</p>

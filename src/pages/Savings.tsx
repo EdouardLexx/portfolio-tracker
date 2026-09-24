@@ -337,8 +337,8 @@ export function SavingsPage({
           <div
             className={`mt-4 rounded-lg px-4 py-3 text-sm ${
               outcome.ok
-                ? 'bg-emerald-50 text-emerald-800'
-                : 'bg-red-50 text-red-700'
+                ? 'bg-emerald-50 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300'
+                : 'bg-red-50 dark:bg-red-950 text-red-700 dark:text-red-300'
             }`}
           >
             {outcome.message}
@@ -412,7 +412,7 @@ export function SavingsPage({
                     ) : (
                       <button
                         onClick={() => setConfirmId(tx.id)}
-                        className="text-xs text-gray-400 dark:text-gray-500 hover:text-red-600"
+                        className="text-xs text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400"
                       >
                         ✕
                       </button>
