@@ -9,9 +9,9 @@ import {
   CartesianGrid,
 } from 'recharts'
 import type { HistoricalPrice, Transaction, SymbolInfo } from '../types'
-import { SAVINGS_KINDS } from '../types'
 import { formatEUR, formatCompactEUR } from '../utils/formatters'
 import { useIsDark, chartTheme } from '../hooks/useTheme'
+import { buildWealthSeries, periodStart, type Period } from '../utils/wealthSeries'
 
 interface WealthChartProps {
   /** Same curve serves the whole estate and the investments alone. */
@@ -22,8 +22,6 @@ interface WealthChartProps {
   rates: Record<string, number>
   symbols: Record<string, SymbolInfo>
 }
-
-type Period = 'YTD' | '1Y' | '5Y' | 'ALL'
 
 export function WealthChart({
   title = 'Évolution du patrimoine',
@@ -36,122 +34,14 @@ export function WealthChart({
   const theme = chartTheme(useIsDark())
   const [period, setPeriod] = useState<Period>('ALL')
 
+  const series = useMemo(
+    () => buildWealthSeries(transactions, history, fxHistory, rates, symbols),
+    [transactions, history, fxHistory, rates, symbols]
+  )
   const data = useMemo(() => {
-    if (!transactions.length) return []
-
-    const tickerOf = (tx: Transaction) => tx.symbol ?? symbols[tx.isin]?.symbol
-    const priced = new Set(
-      Object.entries(history)
-        .filter(([, h]) => h.length > 0)
-        .map(([ticker]) => ticker)
-    )
-
-    const currencyByTicker = new Map<string, string>()
-    for (const info of Object.values(symbols)) {
-      currencyByTicker.set(info.symbol, info.currency || 'EUR')
-    }
-    for (const tx of transactions) {
-      if (tx.symbol) currencyByTicker.set(tx.symbol, 'EUR')
-    }
-
-    // Savings and cash have no market price: they are simply money held, and
-    // their balance moves only when a deposit or interest lands.
-    const moneyByDate = new Map<string, number>()
-    const sharesByDate = new Map<string, { ticker: string; qty: number }[]>()
-
-    for (const tx of transactions) {
-      if (SAVINGS_KINDS.includes(tx.account)) {
-        const delta = tx.amountEUR + (tx.interestEUR ?? 0)
-        moneyByDate.set(tx.date, (moneyByDate.get(tx.date) ?? 0) + delta)
-        continue
-      }
-      const ticker = tickerOf(tx)
-      if (!ticker || !priced.has(ticker)) continue
-      if (!sharesByDate.has(tx.date)) sharesByDate.set(tx.date, [])
-      sharesByDate.get(tx.date)!.push({ ticker, qty: tx.quantity })
-    }
-
-    const priceMap = new Map<string, Map<string, number>>()
-    for (const [ticker, h] of Object.entries(history)) {
-      priceMap.set(ticker, new Map(h.map((d) => [d.date, d.close])))
-    }
-    const fxMap = new Map<string, Map<string, number>>()
-    for (const [currency, h] of Object.entries(fxHistory)) {
-      fxMap.set(currency, new Map(h.map((d) => [d.date, d.close])))
-    }
-
-    const dates = new Set<string>()
-    Object.values(history).forEach((h) => h.forEach((d) => dates.add(d.date)))
-    transactions.forEach((t) => dates.add(t.date))
-    const sorted = [...dates].sort()
-
-    const firstDate = transactions.map((t) => t.date).sort()[0]
-
-    const holdings: Record<string, number> = {}
-    const lastPrice: Record<string, number> = {}
-    const lastFx: Record<string, number> = {}
-    let money = 0
-
-    const series: { date: string; total: number; money: number }[] = []
-
-    for (const date of sorted) {
-      if (date < firstDate) continue
-
-      money += moneyByDate.get(date) ?? 0
-      for (const s of sharesByDate.get(date) ?? []) {
-        holdings[s.ticker] = (holdings[s.ticker] || 0) + s.qty
-      }
-
-      let invested = 0
-      for (const [ticker, qty] of Object.entries(holdings)) {
-        const price = priceMap.get(ticker)?.get(date) ?? lastPrice[ticker]
-        if (price == null) continue
-        lastPrice[ticker] = price
-
-        const currency = currencyByTicker.get(ticker) ?? 'EUR'
-        let fx = 1
-        if (currency !== 'EUR') {
-          fx =
-            fxMap.get(currency)?.get(date) ??
-            lastFx[currency] ??
-            rates[currency] ??
-            1
-          lastFx[currency] = fx
-        }
-        invested += (qty * price) / fx
-      }
-
-      series.push({
-        date,
-        total: Math.round((invested + money) * 100) / 100,
-        money: Math.round(money * 100) / 100,
-      })
-    }
-
-    const now = new Date()
-    let start: string
-    switch (period) {
-      case 'YTD':
-        start = `${now.getFullYear()}-01-01`
-        break
-      case '1Y': {
-        const d = new Date(now)
-        d.setFullYear(d.getFullYear() - 1)
-        start = d.toISOString().split('T')[0]
-        break
-      }
-      case '5Y': {
-        const d = new Date(now)
-        d.setFullYear(d.getFullYear() - 5)
-        start = d.toISOString().split('T')[0]
-        break
-      }
-      default:
-        start = '1900-01-01'
-    }
-
+    const start = periodStart(period)
     return series.filter((p) => p.date >= start)
-  }, [transactions, history, fxHistory, rates, symbols, period])
+  }, [series, period])
 
   if (!data.length) return null
 
