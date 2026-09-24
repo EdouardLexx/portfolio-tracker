@@ -81,7 +81,11 @@ jobs:
           done
           curl -sf http://127.0.0.1:4719/api/health | grep -q portfolio-tracker
           curl -sf http://127.0.0.1:4719/ | grep -q '<div id="root">'
-          curl -sf http://127.0.0.1:4719/THIRD_PARTY_LICENSES.txt | grep -q 'JavaScriptCore'
+          # Download first: piping a large file into grep -q makes curl fail
+          # with a write error (23) once grep stops reading, and pipefail
+          # turns that into a failed step.
+          curl -sf -o licenses.txt http://127.0.0.1:4719/THIRD_PARTY_LICENSES.txt
+          grep -q 'JavaScriptCore' licenses.txt
           echo "OK sur ${{ matrix.os }}"
 
   publish:
