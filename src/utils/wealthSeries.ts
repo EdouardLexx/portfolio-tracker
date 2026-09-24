@@ -1,5 +1,6 @@
 import type { HistoricalPrice, Transaction, SymbolInfo } from '../types'
 import { SAVINGS_KINDS } from '../types'
+import { toLocalISODate } from './dates'
 
 export interface WealthPoint {
   date: string
@@ -121,12 +122,12 @@ export function periodStart(period: Period, now = new Date()): string {
     case '1Y': {
       const d = new Date(now)
       d.setFullYear(d.getFullYear() - 1)
-      return d.toISOString().split('T')[0]
+      return toLocalISODate(d)
     }
     case '5Y': {
       const d = new Date(now)
       d.setFullYear(d.getFullYear() - 5)
-      return d.toISOString().split('T')[0]
+      return toLocalISODate(d)
     }
     default:
       return '1900-01-01'

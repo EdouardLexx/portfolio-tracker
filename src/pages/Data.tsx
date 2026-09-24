@@ -1,6 +1,6 @@
-import { useMemo, useRef, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 import type { Transaction, ImportRecord, Position, SymbolInfo } from '../types'
-import { ACCOUNTS } from '../types'
+import { ACCOUNTS, SAVINGS_KINDS } from '../types'
 import type { ImportOutcome } from '../hooks/usePortfolio'
 import {
   formatEUR,
@@ -52,10 +52,11 @@ function AccountBadge({
 }) {
   const found = ACCOUNTS.find((m) => m.kind === kind)
   const meta = label ? { shortLabel: label, color } : found
+  const background = meta?.color ?? '#9ca3af'
   return (
     <span
-      className="text-xs px-2 py-0.5 rounded-full text-white dark:text-gray-900 whitespace-nowrap"
-      style={{ backgroundColor: meta?.color ?? '#9ca3af' }}
+      className="text-xs px-2 py-0.5 rounded-full whitespace-nowrap"
+      style={{ backgroundColor: background, color: readableTextOn(background) }}
     >
       {meta?.shortLabel ?? kind}
     </span>
@@ -439,6 +440,8 @@ export function DataPage({
   )
 }
 
+const NO_ROWS = new Set<number>()
+
 interface TransactionBrowserProps {
   transactions: Transaction[]
   symbols: Record<string, SymbolInfo>
@@ -457,11 +460,21 @@ function TransactionBrowser({
 }: TransactionBrowserProps) {
   const [query, setQuery] = useState('')
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({})
-  const [selected, setSelected] = useState<Set<number>>(new Set())
+  // Indices point into `transactions`: once it changes (an import, a
+  // deletion elsewhere) they would address other rows, so the selection only
+  // holds for the list it was made on.
+  const [selection, setSelection] = useState<{ of: Transaction[]; rows: Set<number> }>(
+    { of: transactions, rows: new Set() }
+  )
+  const selected = selection.of === transactions ? selection.rows : NO_ROWS
+  const setSelected = (rows: Set<number>) => setSelection({ of: transactions, rows })
   const [confirming, setConfirming] = useState(false)
 
-  const labelOf = (tx: Transaction) =>
-    tx.symbol || symbols[tx.isin]?.symbol || tx.isin || tx.productName
+  const labelOf = useCallback(
+    (tx: Transaction) =>
+      tx.symbol || symbols[tx.isin]?.symbol || tx.isin || tx.productName,
+    [symbols]
+  )
 
   const rows = useMemo(
     () => transactions.map((tx, index) => ({ tx, index })),
@@ -477,8 +490,7 @@ function TransactionBrowser({
         .toLowerCase()
         .includes(q)
     )
-    // labelOf depends on symbols, which changes with the data
-  }, [rows, query, symbols])
+  }, [rows, query, labelOf])
 
   const groups = useMemo(() => {
     const byAccount = new Map<string, typeof filtered>()
@@ -660,7 +672,9 @@ function TransactionBrowser({
                             {formatQuantity(tx.quantity)}
                           </td>
                           <td className="py-2 text-right text-gray-600 dark:text-gray-400 tabular-nums whitespace-nowrap">
-                            {formatMoney(tx.price, tx.currency)}
+                            {SAVINGS_KINDS.includes(tx.account)
+                              ? '—'
+                              : formatMoney(tx.price, tx.currency)}
                           </td>
                           <td className="py-2 text-right text-gray-900 dark:text-gray-100 tabular-nums whitespace-nowrap">
                             {formatEUR(tx.interestEUR ?? tx.amountEUR)}

@@ -21,6 +21,7 @@ import {
 } from '../utils/loans'
 import { formatCompactEUR, formatEUR, formatNumber } from '../utils/formatters'
 import { localToday } from '../utils/dates'
+import { parseDecimalInput } from '../utils/input'
 import { useIsDark, chartTheme } from '../hooks/useTheme'
 
 interface LoansPageProps {
@@ -45,8 +46,6 @@ function formatMonths(months: number): string {
   const y = `${years} an${years > 1 ? 's' : ''}`
   return rest ? `${y} et ${rest} mois` : y
 }
-
-const parseNumber = (v: string) => parseFloat(v.replace(',', '.').replace(/\s/g, ''))
 
 const kindLabel = (kind: LoanKind) =>
   LOAN_KINDS.find((k) => k.kind === kind)?.label ?? 'Prêt'
@@ -107,14 +106,14 @@ function toForm(loan: Loan): FormState {
 
 /** Builds the loan, or explains the first field that stops it. */
 function fromForm(form: FormState, id: string): Loan | string {
-  const principal = parseNumber(form.principal)
-  const rate = parseNumber(form.rate)
+  const principal = parseDecimalInput(form.principal)
+  const rate = parseDecimalInput(form.rate)
   const duration = Number(form.duration)
   const hasDeferral = form.repayment === 'amortizing' && form.deferral !== 'none'
   const deferralMonths = hasDeferral ? Number(form.deferralMonths) : 0
-  const insurance = form.insurance.trim() ? parseNumber(form.insurance) : 0
-  const fees = form.fees.trim() ? parseNumber(form.fees) : 0
-  const bankPayment = form.bankPayment.trim() ? parseNumber(form.bankPayment) : null
+  const insurance = form.insurance.trim() ? parseDecimalInput(form.insurance) : 0
+  const fees = form.fees.trim() ? parseDecimalInput(form.fees) : 0
+  const bankPayment = form.bankPayment.trim() ? parseDecimalInput(form.bankPayment) : null
 
   if (!form.name.trim()) return 'Donne un nom à ce prêt.'
   if (!(principal > 0)) return 'Indique le montant emprunté.'

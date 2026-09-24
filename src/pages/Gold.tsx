@@ -2,9 +2,12 @@ import { useState } from 'react'
 import type { Transaction, Position } from '../types'
 import { COIN_SPECS, TROY_OUNCE_GRAMS } from '../types'
 import type { ImportOutcome } from '../hooks/usePortfolio'
+import { localToday } from '../utils/dates'
+import { parseDecimalInput } from '../utils/input'
 import {
   formatEUR,
   formatHolding,
+  formatMoney,
   formatNumber,
   formatQuantity,
 } from '../utils/formatters'
@@ -34,7 +37,7 @@ export function GoldPage({
   removeTransaction,
 }: GoldPageProps) {
   const [coinId, setCoinId] = useState(COIN_SPECS[0].id)
-  const [date, setDate] = useState(new Date().toISOString().slice(0, 10))
+  const [date, setDate] = useState(localToday())
   const [quantity, setQuantity] = useState('1')
   const [paid, setPaid] = useState('')
   const [busy, setBusy] = useState(false)
@@ -52,7 +55,7 @@ export function GoldPage({
 
   async function submit(e: React.FormEvent) {
     e.preventDefault()
-    const qty = parseFloat(quantity.replace(',', '.'))
+    const qty = parseDecimalInput(quantity)
     if (!Number.isFinite(qty) || qty <= 0) {
       setOutcome({
         ok: false,
@@ -66,7 +69,7 @@ export function GoldPage({
     setOutcome(null)
     try {
       const totalPaidEUR = paid
-        ? parseFloat(paid.replace(',', '.')) || undefined
+        ? parseDecimalInput(paid) || undefined
         : undefined
       setOutcome(await addGoldEntry({ coinId, date, quantity: qty, totalPaidEUR }))
       setQuantity('1')
@@ -87,7 +90,7 @@ export function GoldPage({
           <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
             <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Once troy</p>
             <p className="text-xl font-bold text-gray-900 dark:text-gray-100">
-              {formatEUR(ouncePriceEUR)}
+              {formatMoney(ouncePriceEUR, 'EUR')}
             </p>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
               {formatNumber(goldSpotUSD)} $US
@@ -96,7 +99,7 @@ export function GoldPage({
           <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
             <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Gramme d'or fin</p>
             <p className="text-xl font-bold text-gray-900 dark:text-gray-100">
-              {formatEUR(ouncePriceEUR / TROY_OUNCE_GRAMS)}
+              {formatMoney(ouncePriceEUR / TROY_OUNCE_GRAMS, 'EUR')}
             </p>
           </div>
           <div className="bg-amber-50 dark:bg-amber-950 rounded-lg p-4">
@@ -104,7 +107,7 @@ export function GoldPage({
               Valeur or d'une pièce
             </p>
             <p className="text-xl font-bold text-amber-900 dark:text-amber-200">
-              {formatEUR(melt)}
+              {formatMoney(melt, 'EUR')}
             </p>
             <p className="text-xs text-amber-700 dark:text-amber-400 mt-1">
               {formatNumber(spec.fineGoldGrams, 3)} g d'or fin
@@ -144,7 +147,7 @@ export function GoldPage({
             <input
               type="date"
               value={date}
-              max={new Date().toISOString().slice(0, 10)}
+              max={localToday()}
               onChange={(e) => setDate(e.target.value)}
               className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-200"
             />

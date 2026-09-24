@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useLayoutEffect, useCallback, useSyncExternalStore } from 'react'
 
 export type Theme = 'light' | 'dark'
 
@@ -22,23 +22,20 @@ function initialTheme(): Theme {
  * threading a prop through every page.
  */
 export function useIsDark(): boolean {
-  const [isDark, setIsDark] = useState(
-    () =>
-      typeof document !== 'undefined' &&
-      document.documentElement.classList.contains('dark')
-  )
+  return useSyncExternalStore(subscribeToRootClass, rootIsDark, () => false)
+}
 
-  useEffect(() => {
-    const root = document.documentElement
-    const observer = new MutationObserver(() =>
-      setIsDark(root.classList.contains('dark'))
-    )
-    observer.observe(root, { attributes: true, attributeFilter: ['class'] })
-    setIsDark(root.classList.contains('dark'))
-    return () => observer.disconnect()
-  }, [])
+function rootIsDark(): boolean {
+  return document.documentElement.classList.contains('dark')
+}
 
-  return isDark
+function subscribeToRootClass(onChange: () => void): () => void {
+  const observer = new MutationObserver(onChange)
+  observer.observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ['class'],
+  })
+  return () => observer.disconnect()
 }
 
 export function chartTheme(isDark: boolean) {
@@ -63,7 +60,8 @@ export function chartTheme(isDark: boolean) {
 export function useTheme() {
   const [theme, setTheme] = useState<Theme>(initialTheme)
 
-  useEffect(() => {
+  // Before paint, so a dark theme never flashes light on load.
+  useLayoutEffect(() => {
     document.documentElement.classList.toggle('dark', theme === 'dark')
     try {
       localStorage.setItem(KEY, theme)

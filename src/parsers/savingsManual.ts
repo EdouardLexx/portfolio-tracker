@@ -8,12 +8,6 @@ export interface SavingsBalance {
   updatedAt: string
 }
 
-/**
- * A deposit is one "unit" per euro paid in, so the cost basis is simply the
- * sum of what was paid. The current value comes from the balance the user
- * reads off their bank, which is why the position holds a single unit priced
- * at that balance rather than a unit per euro.
- */
 export const OPENING_SOURCE = 'Solde de départ'
 
 /**
@@ -77,6 +71,21 @@ export function migrateOrphanBalance(
   if (transactions.some((t) => t.account === 'savings')) return null
   const date = toLocalISODate(new Date(balance.updatedAt))
   return [...transactions, buildSavingsDeposit(date, balance.balanceEUR, 'opening')]
+}
+
+/**
+ * Livret A balance. Interest lines come from a statement, so they beat a
+ * hand-typed balance; with neither, the balance is what was paid in.
+ */
+export function savingsBalance(
+  transactions: Transaction[],
+  typed: SavingsBalance | null
+): { paidInEUR: number; interestEUR: number; balanceEUR: number } {
+  const rows = transactions.filter((t) => t.account === 'savings')
+  const paidInEUR = rows.reduce((s, t) => s + t.amountEUR, 0)
+  const booked = rows.reduce((s, t) => s + (t.interestEUR ?? 0), 0)
+  const balanceEUR = booked ? paidInEUR + booked : (typed?.balanceEUR ?? paidInEUR)
+  return { paidInEUR, interestEUR: balanceEUR - paidInEUR, balanceEUR }
 }
 
 /**

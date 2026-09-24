@@ -26,15 +26,6 @@ export function formatEUR(value: number): string {
   }).format(value)
 }
 
-export function formatUSD(value: number): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(value)
-}
-
 /**
  * Share counts are whole numbers; crypto holdings are not. Show just enough
  * decimals to keep a fraction of a coin meaningful.
@@ -63,14 +54,6 @@ export function formatMoney(value: number, currency: string): string {
   }
 }
 
-export function formatPercent(value: number): string {
-  return new Intl.NumberFormat('fr-FR', {
-    style: 'percent',
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(value / 100)
-}
-
 export function formatNumber(value: number, decimals = 2): string {
   return new Intl.NumberFormat('fr-FR', {
     minimumFractionDigits: decimals,
@@ -89,13 +72,6 @@ export function formatCompactNumber(value: number): string {
     notation: 'compact',
     maximumFractionDigits: 2,
   }).format(value)
-}
-
-export function formatMarketCap(value: number): string {
-  if (value >= 1e12) return `${(value / 1e12).toFixed(2)} T$`
-  if (value >= 1e9) return `${(value / 1e9).toFixed(2)} Md$`
-  if (value >= 1e6) return `${(value / 1e6).toFixed(2)} M$`
-  return `${value.toFixed(0)} $`
 }
 
 export function formatCompactEUR(value: number): string {

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import type {
   Loan,
   Transaction,
@@ -11,7 +11,7 @@ import type {
   AccountKind,
 } from '../types'
 import { SAVINGS_KINDS } from '../types'
-import { parseDegiroCsv, isDegiroCsv } from '../parsers/degiroCsv'
+import { parseDegiroCsv } from '../parsers/degiroCsv'
 import { parseBoursoramaPdf } from '../parsers/boursoramaPdf'
 import { parseLedgerCsv, isLedgerCsv } from '../parsers/ledgerCsv'
 import {
@@ -29,6 +29,7 @@ import {
 import {
   buildSavingsDeposit,
   migrateOrphanBalance,
+  savingsBalance,
   savingsQuote,
   buildCashMovement,
   cashQuote,
@@ -76,10 +77,41 @@ export interface ImportOutcome {
 
 export type Scope = AccountKind | 'all'
 
+/**
+ * What this browser already holds, read once at start. A Livret A balance
+ * typed before any movement becomes its opening movement (see
+ * `migrateOrphanBalance`); the mount effect then persists that migration.
+ */
+function readStoredPortfolio() {
+  const stored = loadTransactions() ?? []
+  const savings = loadSavings()
+  const migrated = migrateOrphanBalance(stored, savings)
+  return migrated
+    ? { transactions: sortTransactionsDesc(migrated), savings: null, migrated: true }
+    : { transactions: stored, savings, migrated: false }
+}
+
+/**
+ * `public/Transactions.csv`, a local DEGIRO export used as starting data
+ * when nothing is stored yet. Empty when the file does not exist.
+ */
+async function readBundledCsv(): Promise<Transaction[]> {
+  try {
+    const res = await fetch('/Transactions.csv')
+    // Without the file, Vite's SPA fallback answers 200 with index.html.
+    if (!res.ok || res.headers.get('content-type')?.includes('text/html')) return []
+    const { transactions } = parseDegiroCsv(await res.text(), 'Transactions.csv')
+    return sortTransactionsDesc(transactions)
+  } catch {
+    return []
+  }
+}
+
 export function usePortfolio(scope: Scope) {
-  const [allTransactions, setAllTransactions] = useState<Transaction[]>([])
-  const [imports, setImports] = useState<ImportRecord[]>([])
-  const [symbols, setSymbols] = useState<Record<string, SymbolInfo>>({})
+  const [boot] = useState(readStoredPortfolio)
+  const [allTransactions, setAllTransactions] = useState<Transaction[]>(boot.transactions)
+  const [imports, setImports] = useState<ImportRecord[]>(loadImports)
+  const [symbols, setSymbols] = useState<Record<string, SymbolInfo>>(loadSymbols)
   const [quotes, setQuotes] = useState<StockQuote[]>([])
   const [history, setHistory] = useState<Record<string, HistoricalPrice[]>>({})
   const [spHistory, setSpHistory] = useState<HistoricalPrice[]>([])
@@ -87,64 +119,40 @@ export function usePortfolio(scope: Scope) {
   const [fxHistory, setFxHistory] = useState<Record<string, HistoricalPrice[]>>({})
   const [rates, setRates] = useState<FxRates>({ EUR: 1 })
   const [goldSpotUSD, setGoldSpotUSD] = useState(0)
-  const [savings, setSavings] = useState<SavingsBalance | null>(null)
-  const [loans, setLoans] = useState<Loan[]>([])
+  const [savings, setSavings] = useState<SavingsBalance | null>(boot.savings)
+  const [loans, setLoans] = useState<Loan[]>(loadLoans)
   const [savingsRate, setSavingsRate] = useState<{
     rate: number
     since: string
   } | null>(null)
-  const [ready, setReady] = useState(false)
+  // Without stored data, the bundled CSV (if any) is fetched before anything
+  // can be priced.
+  const [ready, setReady] = useState(boot.transactions.length > 0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  // Every change of the transactions reloads the market data; a slower,
+  // older load must not land on top of the newer one.
+  const loadId = useRef(0)
 
-  const seedFromBundledCsv = useCallback(async () => {
-    try {
-      const res = await fetch('/Transactions.csv')
-      // Without the file, Vite's SPA fallback answers 200 with index.html.
-      if (!res.ok || res.headers.get('content-type')?.includes('text/html')) {
-        setAllTransactions([])
-        return
-      }
-      const text = await res.text()
-      const { transactions } = parseDegiroCsv(text, 'Transactions.csv')
-      const seeded = sortTransactionsDesc(transactions)
+  const seedFromBundledCsv = useCallback(() => {
+    readBundledCsv().then((seeded) => {
+      if (seeded.length) saveTransactions(seeded)
       setAllTransactions(seeded)
-      saveTransactions(seeded)
-    } catch {
-      setAllTransactions([])
-    } finally {
       setReady(true)
-    }
+    })
   }, [])
 
   useEffect(() => {
     clearLegacyData()
-    setImports(loadImports())
-    setSymbols(loadSymbols())
-    setSavings(loadSavings())
-    setLoans(loadLoans())
+    if (boot.migrated && saveTransactions(boot.transactions)) clearSavings()
 
     // Published by the Caisse des Dépôts; missing rate is not fatal.
     fetchLivretARate()
       .then(setSavingsRate)
       .catch(() => setSavingsRate(null))
 
-    const stored = loadTransactions()
-    const migrated = migrateOrphanBalance(stored ?? [], loadSavings())
-    if (migrated && saveTransactions(sortTransactionsDesc(migrated))) {
-      clearSavings()
-      setSavings(null)
-      setAllTransactions(sortTransactionsDesc(migrated))
-      setReady(true)
-      return
-    }
-    if (stored && stored.length) {
-      setAllTransactions(stored)
-      setReady(true)
-      return
-    }
-    seedFromBundledCsv()
-  }, [seedFromBundledCsv])
+    if (!boot.transactions.length) seedFromBundledCsv()
+  }, [boot, seedFromBundledCsv])
 
   /** Resolves any ISIN we have not seen before, then caches it. */
   const ensureSymbols = useCallback(
@@ -177,6 +185,8 @@ export function usePortfolio(scope: Scope) {
 
   const loadMarketData = useCallback(
     async (txs: Transaction[]) => {
+      const id = ++loadId.current
+      const current = () => id === loadId.current
       if (!txs.length) {
         setLoading(false)
         return
@@ -224,6 +234,7 @@ export function usePortfolio(scope: Scope) {
           fetchQuotes(marketSymbols),
           fetchFxRates(currencies),
         ])
+        if (!current()) return
 
         const spotUSD =
           quotesData.find((q) => q.symbol === GOLD_SPOT_SYMBOL)?.price ?? 0
@@ -246,13 +257,13 @@ export function usePortfolio(scope: Scope) {
           ...foreign.map((c) => fetchHistory(`EUR${c}=X`, from)),
           ...(coinIds.length ? [fetchHistory(GOLD_SPOT_SYMBOL, from)] : []),
         ])
+        if (!current()) return
 
         const histMap: Record<string, HistoricalPrice[]> = {}
         tickers.forEach((ticker, i) => {
           const r = results[i]
           if (r.status === 'fulfilled') histMap[ticker] = r.value
         })
-        setHistory(histMap)
 
         const sp = results[tickers.length]
         if (sp?.status === 'fulfilled') setSpHistory(sp.value)
@@ -278,19 +289,21 @@ export function usePortfolio(scope: Scope) {
                 usdRate
               )
             }
-            setHistory({ ...histMap })
           }
         }
+        setHistory(histMap)
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Erreur inconnue')
+        if (current()) setError(err instanceof Error ? err.message : 'Erreur inconnue')
       } finally {
-        setLoading(false)
+        if (current()) setLoading(false)
       }
     },
     [ensureSymbols]
   )
 
   useEffect(() => {
+    // Fetching is this effect's job: the loading flag flips with it.
+    // oxlint-disable-next-line react/set-state-in-effect
     if (ready) loadMarketData(allTransactions)
   }, [ready, allTransactions, loadMarketData])
 
@@ -309,15 +322,9 @@ export function usePortfolio(scope: Scope) {
   const effectiveQuotes = useMemo(() => {
     const deposits = allTransactions.filter((t) => t.account === 'savings')
     if (!deposits.length) return quotes
-
-    const paidIn = deposits.reduce((s, t) => s + t.amountEUR, 0)
-    const interest = deposits.reduce((s, t) => s + (t.interestEUR ?? 0), 0)
-    // Interest rows come from a statement, so they beat a hand-typed balance.
-    const balance = interest
-      ? paidIn + interest
-      : (savings?.balanceEUR ?? paidIn)
+    const { balanceEUR } = savingsBalance(deposits, savings)
     const units = deposits.filter((t) => t.quantity > 0).length
-    return [...quotes, savingsQuote(balance, units)]
+    return [...quotes, savingsQuote(balanceEUR, units)]
   }, [quotes, allTransactions, savings])
 
   const withCash = useMemo(() => {
@@ -676,5 +683,3 @@ export function usePortfolio(scope: Scope) {
     resetData,
   }
 }
-
-export { isDegiroCsv }

@@ -11,6 +11,7 @@ import {
 } from 'recharts'
 import { useIsDark, chartTheme } from '../hooks/useTheme'
 import { computePerformance } from '../utils/performance'
+import { periodStart, type Period } from '../utils/wealthSeries'
 import type {
   HistoricalPrice,
   Transaction,
@@ -27,7 +28,6 @@ interface PerformanceChartProps {
   transactions: Transaction[]
 }
 
-type Period = 'YTD' | '1Y' | '5Y' | 'ALL'
 
 const SERIES_LABELS: Record<string, string> = {
   portfolio: 'Portefeuille',
@@ -48,28 +48,7 @@ export function PerformanceChart({
   const theme = chartTheme(useIsDark())
 
   const chartData = useMemo(() => {
-    const now = new Date()
-    let startDate: string
-    switch (period) {
-      case 'YTD':
-        startDate = `${now.getFullYear()}-01-01`
-        break
-      case '1Y': {
-        const d = new Date(now)
-        d.setFullYear(d.getFullYear() - 1)
-        startDate = d.toISOString().split('T')[0]
-        break
-      }
-      case '5Y': {
-        const d = new Date(now)
-        d.setFullYear(d.getFullYear() - 5)
-        startDate = d.toISOString().split('T')[0]
-        break
-      }
-      default:
-        startDate = '1900-01-01'
-    }
-
+    const startDate = periodStart(period)
     return computePerformance({
       transactions,
       history,

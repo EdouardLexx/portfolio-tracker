@@ -2,9 +2,10 @@ import { useState } from 'react'
 import type { Transaction } from '../types'
 import type { ImportOutcome } from '../hooks/usePortfolio'
 import type { SavingsBalance } from '../parsers/savingsManual'
-import { isOpeningBalance } from '../parsers/savingsManual'
+import { isOpeningBalance, savingsBalance } from '../parsers/savingsManual'
 import { formatEUR, formatHolding, formatNumber } from '../utils/formatters'
 import { localToday } from '../utils/dates'
+import { parseDecimalInput } from '../utils/input'
 
 interface SavingsPageProps {
   transactions: Transaction[]
@@ -34,20 +35,16 @@ export function SavingsPage({
   const deposits = savingsRows.filter((t) => t.interestEUR == null)
   const interestRows = savingsRows.filter((t) => t.interestEUR != null)
 
-  const paidIn = deposits.reduce((s, t) => s + t.amountEUR, 0)
-  const bookedInterest = interestRows.reduce(
-    (s, t) => s + (t.interestEUR ?? 0),
-    0
-  )
   // A statement carries its own interest lines; a hand-typed balance is only
   // needed when no statement has been imported.
-  const balance = bookedInterest
-    ? paidIn + bookedInterest
-    : (savings?.balanceEUR ?? paidIn)
-  const interest = balance - paidIn
+  const {
+    paidInEUR: paidIn,
+    interestEUR: interest,
+    balanceEUR: balance,
+  } = savingsBalance(savingsRows, savings)
   const fromStatement = interestRows.length > 0
 
-  const [date, setDate] = useState(new Date().toISOString().slice(0, 10))
+  const [date, setDate] = useState(localToday())
   const [amount, setAmount] = useState('')
   const [balanceInput, setBalanceInput] = useState(
     savings ? String(savings.balanceEUR) : ''
@@ -61,7 +58,7 @@ export function SavingsPage({
 
   function submitDeposit(e: React.FormEvent) {
     e.preventDefault()
-    const value = parseFloat(amount.replace(',', '.').replace(/\s/g, ''))
+    const value = parseDecimalInput(amount)
     if (!Number.isFinite(value) || value === 0) {
       setOutcome({
         ok: false,
@@ -76,7 +73,7 @@ export function SavingsPage({
 
   function submitOpening(e: React.FormEvent) {
     e.preventDefault()
-    const value = parseFloat(openingAmount.replace(',', '.').replace(/\s/g, ''))
+    const value = parseDecimalInput(openingAmount)
     if (!Number.isFinite(value) || value <= 0) {
       setOpeningError('Indique le solde actuel de ton livret.')
       return
@@ -88,7 +85,7 @@ export function SavingsPage({
 
   function submitBalance(e: React.FormEvent) {
     e.preventDefault()
-    const value = parseFloat(balanceInput.replace(',', '.').replace(/\s/g, ''))
+    const value = parseDecimalInput(balanceInput)
     if (!Number.isFinite(value) || value < 0) return
     setSavingsBalance(value)
     setSaved(true)
@@ -309,7 +306,7 @@ export function SavingsPage({
             <input
               type="date"
               value={date}
-              max={new Date().toISOString().slice(0, 10)}
+              max={localToday()}
               onChange={(e) => setDate(e.target.value)}
               className="px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-200"
             />
@@ -370,56 +367,60 @@ export function SavingsPage({
               </tr>
             </thead>
             <tbody>
-              {savingsRows.map((tx) => (
-                <tr key={tx.id} className="border-b border-gray-50 dark:border-gray-800 last:border-0">
-                  <td className="py-2 text-gray-600 dark:text-gray-400">{tx.date}</td>
-                  <td className="py-2 text-gray-600 dark:text-gray-400">
-                    {isOpeningBalance(tx)
-                      ? 'Solde de départ'
-                      : tx.interestEUR != null
-                        ? 'Intérêts'
-                        : tx.amountEUR >= 0
-                          ? 'Versement'
-                          : 'Retrait'}
-                  </td>
-                  <td
-                    className={`py-2 text-right tabular-nums font-medium ${
-                      tx.amountEUR >= 0 ? 'text-gray-900 dark:text-gray-100' : 'text-red-500 dark:text-red-400'
-                    }`}
-                  >
-                    {tx.amountEUR >= 0 ? '+' : ''}
-                    {formatEUR(tx.amountEUR)}
-                  </td>
-                  <td className="py-2 text-right">
-                    {confirmId === tx.id ? (
-                      <span className="flex items-center justify-end gap-2">
+              {savingsRows.map((tx) => {
+                // Interest rows carry their amount apart: `amountEUR` is 0.
+                const shown = tx.interestEUR ?? tx.amountEUR
+                return (
+                  <tr key={tx.id} className="border-b border-gray-50 dark:border-gray-800 last:border-0">
+                    <td className="py-2 text-gray-600 dark:text-gray-400">{tx.date}</td>
+                    <td className="py-2 text-gray-600 dark:text-gray-400">
+                      {isOpeningBalance(tx)
+                        ? 'Solde de départ'
+                        : tx.interestEUR != null
+                          ? 'Intérêts'
+                          : tx.amountEUR >= 0
+                            ? 'Versement'
+                            : 'Retrait'}
+                    </td>
+                    <td
+                      className={`py-2 text-right tabular-nums font-medium ${
+                        shown >= 0 ? 'text-gray-900 dark:text-gray-100' : 'text-red-500 dark:text-red-400'
+                      }`}
+                    >
+                      {shown >= 0 ? '+' : ''}
+                      {formatEUR(shown)}
+                    </td>
+                    <td className="py-2 text-right">
+                      {confirmId === tx.id ? (
+                        <span className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => {
+                              removeTransaction(tx.id)
+                              setConfirmId(null)
+                            }}
+                            className="text-xs px-2 py-1 rounded bg-red-600 text-white dark:text-gray-900"
+                          >
+                            Supprimer
+                          </button>
+                          <button
+                            onClick={() => setConfirmId(null)}
+                            className="text-xs px-2 py-1 rounded bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400"
+                          >
+                            Annuler
+                          </button>
+                        </span>
+                      ) : (
                         <button
-                          onClick={() => {
-                            removeTransaction(tx.id)
-                            setConfirmId(null)
-                          }}
-                          className="text-xs px-2 py-1 rounded bg-red-600 text-white dark:text-gray-900"
+                          onClick={() => setConfirmId(tx.id)}
+                          className="text-xs text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400"
                         >
-                          Supprimer
+                          ✕
                         </button>
-                        <button
-                          onClick={() => setConfirmId(null)}
-                          className="text-xs px-2 py-1 rounded bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400"
-                        >
-                          Annuler
-                        </button>
-                      </span>
-                    ) : (
-                      <button
-                        onClick={() => setConfirmId(tx.id)}
-                        className="text-xs text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400"
-                      >
-                        ✕
-                      </button>
-                    )}
-                  </td>
-                </tr>
-              ))}
+                      )}
+                    </td>
+                  </tr>
+                )
+              })}
             </tbody>
           </table>
         )}
@@ -443,14 +444,14 @@ function CashSection({
   const moves = transactions.filter((t) => t.account === 'cash')
   const held = moves.reduce((s, t) => s + t.amountEUR, 0)
 
-  const [date, setDate] = useState(new Date().toISOString().slice(0, 10))
+  const [date, setDate] = useState(localToday())
   const [amount, setAmount] = useState('')
   const [outcome, setOutcome] = useState<ImportOutcome | null>(null)
   const [confirmId, setConfirmId] = useState<string | null>(null)
 
   function submit(e: React.FormEvent) {
     e.preventDefault()
-    const value = parseFloat(amount.replace(',', '.').replace(/\s/g, ''))
+    const value = parseDecimalInput(amount)
     if (!Number.isFinite(value) || value === 0) {
       setOutcome({
         ok: false,
@@ -505,7 +506,7 @@ function CashSection({
             <input
               type="date"
               value={date}
-              max={new Date().toISOString().slice(0, 10)}
+              max={localToday()}
               onChange={(e) => setDate(e.target.value)}
               className="px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-transparent focus:outline-none focus:ring-2 focus:ring-slate-300"
             />

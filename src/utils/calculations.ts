@@ -35,6 +35,15 @@ export function filterByAccount(
   return account === 'all' ? txs : txs.filter((t) => t.account === account)
 }
 
+/**
+ * Line a transaction belongs to: symbol first (crypto and manual assets have
+ * no ISIN), then ISIN, never the product name while either exists — a fund
+ * keeps its line when its issuer renames it.
+ */
+export function positionKey(tx: Transaction): string {
+  return tx.symbol || tx.isin || tx.productName
+}
+
 export function buildPositions(
   txs: Transaction[],
   symbols: Record<string, SymbolInfo>,
@@ -56,13 +65,13 @@ export function buildPositions(
     fxFees: number
     orderRefs: Set<string>
     firstDate: string
+    lastDate: string
   }
 
   const buckets = new Map<string, Bucket>()
 
   for (const tx of txs) {
-    // Crypto has no ISIN but carries its market symbol directly.
-    const key = tx.symbol || tx.isin || tx.productName
+    const key = positionKey(tx)
     let b = buckets.get(key)
     if (!b) {
       b = {
@@ -78,6 +87,7 @@ export function buildPositions(
         fxFees: 0,
         orderRefs: new Set(),
         firstDate: tx.date,
+        lastDate: tx.date,
       }
       buckets.set(key, b)
     }
@@ -91,7 +101,10 @@ export function buildPositions(
     b.orderRefs.add(tx.orderRef)
     if (tx.date < b.firstDate) b.firstDate = tx.date
     // Keep the most recent product name: issuers rename funds over time.
-    if (tx.date >= b.firstDate) b.name = tx.productName
+    if (tx.date >= b.lastDate) {
+      b.lastDate = tx.date
+      b.name = tx.productName
+    }
   }
 
   const positions: Position[] = []
@@ -196,7 +209,6 @@ export function buildSummary(
   }
 }
 
-
 /** Per-account totals for the combined view. */
 export function summarisePerAccount(
   txs: Transaction[],
@@ -221,7 +233,7 @@ export function summarisePerAccount(
       const costs = p.accounts.map(
         (a) =>
           txs
-            .filter((t) => t.account === a && (t.isin || t.productName) === p.key)
+            .filter((t) => t.account === a && positionKey(t) === p.key)
             .reduce((s, t) => s + t.amountEUR, 0)
       )
       const totalCost = costs.reduce((s, c) => s + c, 0)
