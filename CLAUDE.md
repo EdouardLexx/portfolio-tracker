@@ -19,7 +19,9 @@ Fonctionnalités réellement présentes :
 - performance TWR comparée au S&P 500 et au Nasdaq 100 ;
 - courbes de valeur, répartition, frais, projection à 10 ans ;
 - thème clair/sombre ;
-- mode discret : masque montants et quantités, garde les pourcentages.
+- mode discret : masque montants et quantités, garde les pourcentages ;
+- emprunts (hors immobilier) : échéancier, capital restant dû, coût total,
+  patrimoine net dans Patrimoine.
 
 Utilisateur visé : le propriétaire du portefeuille, seul. Aucune authentification,
 aucun multi-utilisateur.
@@ -55,7 +57,7 @@ src/parsers/         un fichier par source + shared.ts (fusion dédupliquée)
 src/utils/           calculs purs : positions, TWR, projection, stockage, formats
 src/hooks/           usePortfolio (orchestrateur), useTheme
 src/api/             client HTTP vers /api
-src/pages/           Wealth, Investments, Gold, Savings, Data
+src/pages/           Wealth, Investments, Gold, Savings, Loans, Data
 src/components/      graphes et blocs réutilisables
 ```
 
@@ -120,6 +122,13 @@ affichés : vérifier avant de toucher.
 - **Livret A / cash** : pas de cours. La position tient une unité par mouvement,
   valorisée au solde ; le solde vient des opérations du relevé, ou d'une saisie
   manuelle à défaut.
+- **Emprunts** (`src/utils/loans.ts`) : modèle à part (`Loan`), jamais des
+  `Transaction`. Taux fixe, taux mensuel = nominal / 12, intérêts arrondis au
+  centime chaque mois, dernière échéance absorbe les arrondis. La durée inclut
+  le différé ; partiel = intérêts seuls, total = intérêts capitalisés. Le prêt
+  n'existe qu'à partir de sa date de déblocage. **Patrimoine net = brut −
+  capital restant dû** ; les intérêts d'emprunt n'entrent pas dans le TWR.
+  Pas de prêt immobilier tant que la valeur du bien n'est pas suivie.
 
 ## Coding conventions
 

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import type {
+  Loan,
   Transaction,
   Position,
   PortfolioSummary,
@@ -60,6 +61,8 @@ import {
   loadSavings,
   saveSavings,
   clearSavings,
+  loadLoans,
+  saveLoans,
 } from '../utils/store'
 
 export interface ImportOutcome {
@@ -84,6 +87,7 @@ export function usePortfolio(scope: Scope) {
   const [rates, setRates] = useState<FxRates>({ EUR: 1 })
   const [goldSpotUSD, setGoldSpotUSD] = useState(0)
   const [savings, setSavings] = useState<SavingsBalance | null>(null)
+  const [loans, setLoans] = useState<Loan[]>([])
   const [savingsRate, setSavingsRate] = useState<{
     rate: number
     since: string
@@ -117,6 +121,7 @@ export function usePortfolio(scope: Scope) {
     setImports(loadImports())
     setSymbols(loadSymbols())
     setSavings(loadSavings())
+    setLoans(loadLoans())
 
     // Published by the Caisse des Dépôts; missing rate is not fatal.
     fetchLivretARate()
@@ -559,6 +564,27 @@ export function usePortfolio(scope: Scope) {
     if (saveSavings(next)) setSavings(next)
   }, [])
 
+  /** Adds the loan, or replaces the one with the same id. */
+  const saveLoan = useCallback(
+    (loan: Loan): boolean => {
+      const next = loans.some((l) => l.id === loan.id)
+        ? loans.map((l) => (l.id === loan.id ? loan : l))
+        : [...loans, loan]
+      if (!saveLoans(next)) return false
+      setLoans(next)
+      return true
+    },
+    [loans]
+  )
+
+  const removeLoan = useCallback(
+    (id: string) => {
+      const next = loans.filter((l) => l.id !== id)
+      if (saveLoans(next)) setLoans(next)
+    },
+    [loans]
+  )
+
   const removeTransaction = useCallback(
     (id: string) => {
       // Split fills of one order share an id on purpose (that is how the
@@ -587,6 +613,7 @@ export function usePortfolio(scope: Scope) {
     setImports([])
     setSymbols({})
     setSavings(null)
+    setLoans([])
     setAllTransactions([])
     setReady(false)
     seedFromBundledCsv()
@@ -618,6 +645,9 @@ export function usePortfolio(scope: Scope) {
     setSavingsBalance,
     savings,
     savingsRate,
+    loans,
+    saveLoan,
+    removeLoan,
     removeTransaction,
     removeTransactionsAt,
     meltValueEUR,

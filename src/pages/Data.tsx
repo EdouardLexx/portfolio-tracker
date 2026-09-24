@@ -40,8 +40,18 @@ function Card({
   )
 }
 
-function AccountBadge({ kind }: { kind: string }) {
-  const meta = ACCOUNTS.find((m) => m.kind === kind)
+/** `label` and `color` stand in for sources that are not accounts (loans). */
+function AccountBadge({
+  kind,
+  label,
+  color,
+}: {
+  kind: string
+  label?: string
+  color?: string
+}) {
+  const found = ACCOUNTS.find((m) => m.kind === kind)
+  const meta = label ? { shortLabel: label, color } : found
   return (
     <span
       className="text-xs px-2 py-0.5 rounded-full text-white dark:text-gray-900 whitespace-nowrap"
@@ -106,10 +116,18 @@ const MANUAL_SOURCES = [
     where: 'onglet Épargne',
     what: 'Entrées et sorties d’argent liquide.',
   },
+  {
+    account: 'loan',
+    badgeLabel: 'Emprunt',
+    badgeColor: '#8b5cf6',
+    source: 'Emprunts',
+    where: 'onglet Emprunts',
+    what: 'Prêt étudiant, conso, auto : montant, taux, durée, différé, assurance, frais.',
+  },
 ]
 
 const NOT_SUPPORTED_YET =
-  'ventes et retraits de titres, dividendes, autres courtiers, assurance-vie, immobilier, comptes courants.'
+  'ventes et retraits de titres, dividendes, autres courtiers, assurance-vie, immobilier et prêts immobiliers, remboursements anticipés, comptes courants.'
 
 function SupportedData() {
   const rowClass =
@@ -144,7 +162,7 @@ function SupportedData() {
         {MANUAL_SOURCES.map((s) => (
           <li key={s.source} className={rowClass}>
             <div className="flex items-center gap-2 sm:w-52 shrink-0">
-              <AccountBadge kind={s.account} />
+              <AccountBadge kind={s.account} label={s.badgeLabel} color={s.badgeColor} />
               <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
                 {s.source}
               </span>

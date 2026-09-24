@@ -98,6 +98,7 @@ Sources reconnues :
 | Livret A | CSV | export « opérations » Boursorama du livret | relevé du Livret A uniquement |
 | Or physique | saisie manuelle | onglet **Or** : pièce, date, nombre, prix payé | Vreneli, Napoléon, Krugerrand |
 | Cash (billets) | saisie manuelle | onglet **Épargne** → Cash | |
+| Emprunts | saisie manuelle | onglet **Emprunts** | hors prêts immobiliers et remboursements anticipés |
 
 Le format est reconnu au contenu du fichier, pas à son nom. La même liste
 figure dans l'application, page **Données**.
@@ -118,6 +119,12 @@ figure dans l'application, page **Données**.
 - **Or** — saisie manuelle des pièces.
 - **Épargne** — Livret A et cash, via un sélecteur. Ni l'un ni l'autre
   n'apparaît dans Investissements : ce ne sont pas des placements.
+- **Emprunts** — prêts étudiant, conso, auto : on saisit les conditions (montant,
+  taux, durée, date de déblocage, différé, assurance, frais) ; le capital
+  restant dû, ce qui est déjà remboursé, les échéances à venir et le coût total
+  se calculent, avec l'échéancier complet. Dès qu'un emprunt existe, Patrimoine
+  affiche aussi le **patrimoine net** (brut moins capital restant dû) et une
+  courbe brut/net ; sans emprunt, rien ne change.
 - **Données** — imports, et **toutes** les transactions groupées par compte,
   filtrables et supprimables (sélection multiple).
 

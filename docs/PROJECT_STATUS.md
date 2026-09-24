@@ -50,9 +50,13 @@ Vérifié dans le code.
 - TWR avec report des flux et des indices, plus diagnostics
   (`src/utils/performance.ts`).
 - TRI par bissection et projection à 10 ans (`src/utils/projection.ts`).
+- Échéancier d'emprunt : échéances constantes ou in fine, différé partiel ou
+  total, assurance, frais ; capital restant dû et coût total
+  (`src/utils/loans.ts`). Validé sur cas publics et implémentation de référence.
 
 **Interface**
-- Cinq pages : Patrimoine, Investissements, Or, Épargne, Données.
+- Six pages : Patrimoine, Investissements, Or, Épargne, Emprunts, Données.
+- Patrimoine net et courbe brut/net, affichés seulement s'il y a un emprunt.
 - Barre latérale, sélecteur de compte limité à Investissements.
 - Graphes : TWR vs S&P 500 et Nasdaq 100, valeur en euros, donut étiqueté,
   distribution, projection.

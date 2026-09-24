@@ -123,6 +123,25 @@ Protège des valeurs nulles, mais écarterait aussi une journée réellement
 catastrophique.
 Fichier : `src/utils/performance.ts`.
 
+### Remboursements anticipés
+*Fonctionnalité — emprunts.*
+Remboursement partiel en cours de prêt, avec réduction de la durée ou de la
+mensualité : recalculer l'échéancier à partir de la date du remboursement.
+Fichiers : `src/types/index.ts` (`Loan`), `src/utils/loans.ts`,
+`src/pages/Loans.tsx`.
+
+### Prêts immobiliers
+*Fonctionnalité — emprunts.*
+Écartés tant que la valeur du bien n'est pas suivie : sans elle, le patrimoine
+net serait fortement sous-évalué. À faire avec la classe Immobilier (déjà
+annoncée sur Patrimoine).
+
+### Date du jour en UTC dans les formulaires Or et Épargne
+*Bug — mineur.*
+`new Date().toISOString().slice(0, 10)` donne la veille entre minuit et 2 h en
+France. `localToday()` (`src/utils/loans.ts`) fait juste ; l'utiliser aussi dans
+`src/pages/Gold.tsx` et `src/pages/Savings.tsx`.
+
 ### Signer les exécutables
 *Amélioration — confiance.*
 Sans signature, Windows et macOS avertissent au premier lancement. Signature

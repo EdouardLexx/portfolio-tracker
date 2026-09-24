@@ -8,17 +8,19 @@ import { InvestmentsPage } from './pages/Investments'
 import { DataPage } from './pages/Data'
 import { GoldPage } from './pages/Gold'
 import { SavingsPage } from './pages/Savings'
+import { LoansPage } from './pages/Loans'
 
 // AGPL §13: a modified version offered to users must point to its own source.
 const SOURCE_URL = 'https://github.com/EdouardLexx/portfolio-tracker'
 
-type Tab = 'wealth' | 'investments' | 'gold' | 'savings' | 'data'
+type Tab = 'wealth' | 'investments' | 'gold' | 'savings' | 'loans' | 'data'
 
 const TABS: { id: Tab; label: string; icon: string }[] = [
   { id: 'wealth', label: 'Patrimoine', icon: '◈' },
   { id: 'investments', label: 'Investissements', icon: '▤' },
   { id: 'gold', label: 'Or', icon: '◉' },
   { id: 'savings', label: 'Épargne', icon: '▬' },
+  { id: 'loans', label: 'Emprunts', icon: '⊖' },
   { id: 'data', label: 'Données', icon: '⛁' },
 ]
 
@@ -53,6 +55,9 @@ export default function App() {
     setSavingsBalance,
     savings,
     savingsRate,
+    loans,
+    saveLoan,
+    removeLoan,
     removeTransaction,
     removeTransactionsAt,
     meltValueEUR,
@@ -95,6 +100,7 @@ export default function App() {
           fxHistory={fxHistory}
           rates={rates}
           symbols={symbols}
+          loans={loans}
           onOpenInvestments={() => setTab('investments')}
         />
       )
@@ -126,6 +132,10 @@ export default function App() {
           removeTransaction={removeTransaction}
         />
       )
+    }
+
+    if (tab === 'loans') {
+      return <LoansPage loans={loans} saveLoan={saveLoan} removeLoan={removeLoan} />
     }
 
     if (tab === 'data') {

@@ -71,8 +71,15 @@ champ `tla_tldds_percent`, enregistrement le plus récent.
 Autres types : `Position`, `PortfolioSummary`, `ImportRecord`, `SymbolInfo`,
 `HistoricalPrice`, `ParseResult`.
 
+`Loan` décrit un emprunt à taux fixe : montant, taux nominal annuel, durée en
+mois (différé compris), date de déblocage, mode (`amortizing` = échéances
+constantes, `bullet` = in fine), différé (`none`, `partial`, `total`) et sa
+durée, assurance mensuelle, frais, et la mensualité annoncée par la banque pour
+contrôler la saisie. Un passif n'a ni cours ni position : il suit un
+échéancier, d'où un modèle distinct de `Transaction`.
+
 Constantes : `ACCOUNTS` (libellés et couleurs), `SAVINGS_KINDS`, `COIN_SPECS`
-(poids d'or fin), `TROY_OUNCE_GRAMS`.
+(poids d'or fin), `TROY_OUNCE_GRAMS`, `LOAN_KINDS`.
 
 ## Parseurs — `src/parsers/`
 
@@ -175,6 +182,33 @@ catastrophique ; non rencontré en pratique.
 - `project(...)` — capitalisation sur 10 ans avec apport annuel constant, plus
   une bande à ±2 points de rendement.
 
+### `loans.ts` — emprunts
+
+`buildLoanSchedule(loan)` produit l'échéancier mois par mois : taux mensuel =
+taux nominal / 12, intérêts arrondis au centime, mensualité constante calculée
+à la fin du différé sur le capital qui reste, dernière échéance qui solde les
+arrondis. En différé partiel on ne paie que les intérêts ; en différé total
+ils s'ajoutent au capital. Les échéances tombent chaque mois à partir de la
+date de déblocage (même jour, ramené à la fin du mois si besoin).
+
+`loanStatus(loan, schedule, today)` en tire le capital restant dû, le déjà
+remboursé, les intérêts payés, les échéances restantes et le coût total
+(intérêts, capitalisés compris, assurance et frais). `debtOn` et `totalDebtOn`
+donnent la dette à une date : zéro avant le déblocage et après la dernière
+échéance. `paymentMismatch` signale une mensualité calculée qui s'écarte de plus
+de 5 centimes de celle de la banque.
+
+Validé sur des cas publics (100 000 € à 3 % sur 20 ans = 554,60 € ; 10 000 € à
+5 % sur un an = 856,07 €) et contre une implémentation indépendante, échéance
+par échéance, pour chaque option.
+
+### `wealthSeries.ts`
+
+`buildWealthSeries` calcule la valeur quotidienne du patrimoine (positions au
+cours de clôture converties en euros, plus l'épargne et le cash) ;
+`periodStart` borne les périodes YTD, 1 an, 5 ans. Partagé par `WealthChart` et
+`NetWealthChart`.
+
 ### `store.ts`
 
 Lecture/écriture `localStorage`, chaque accès protégé par `try/catch`.
@@ -185,6 +219,7 @@ Lecture/écriture `localStorage`, chaque accès protégé par `try/catch`.
 | `portfolio.imports.v2` | historique des imports |
 | `portfolio.symbols.v1` | cache ISIN → symbole |
 | `portfolio.savings.v1` | solde Livret A saisi à la main |
+| `portfolio.loans.v1` | emprunts |
 
 `clearLegacyData()` supprime les clés `v1` obsolètes au démarrage.
 
@@ -273,14 +308,16 @@ après le rendu et la page s'afficherait une fois avec l'état précédent.
 
 | Page | Fichier | Contenu |
 |---|---|---|
-| Patrimoine | `src/pages/Wealth.tsx` | total, classes d'actifs, courbe d'évolution, projection, classes non implémentées |
+| Patrimoine | `src/pages/Wealth.tsx` | total, classes d'actifs, courbe d'évolution, projection, classes non implémentées ; avec au moins un emprunt, carte « Patrimoine net » et courbe brut/net |
 | Investissements | `src/pages/Investments.tsx` | répartition par compte, répartition, positions, performance, valeur, distribution, frais |
 | Or | `src/pages/Gold.tsx` | cours de l'or, saisie d'achats, lignes enregistrées |
 | Épargne | `src/pages/Savings.tsx` | sélecteur Livret A / Cash, soldes, mouvements |
+| Emprunts | `src/pages/Loans.tsx` | un bloc par prêt (indicateurs, courbe du restant dû, échéancier), formulaire d'ajout et de modification |
 | Données | `src/pages/Data.tsx` | import, état du stockage, historique, toutes les transactions groupées et supprimables |
 
 Composants : `PerformanceChart` (TWR + indices), `WealthChart` (valeur en €,
 réutilisé par Patrimoine et Investissements via une prop `title`),
+`NetWealthChart` (brut et net, affiché seulement s'il y a un emprunt),
 `WealthProjection`, `AllocationChart` (donut étiqueté en mode `wide`),
 `AccountBreakdown`, `PositionsTable`, `FeesCard`, `PerformanceDistribution`,
 `ValueCard`.

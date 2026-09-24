@@ -372,3 +372,30 @@ mentions de licence (MIT, Apache-2.0, LGPL pour JavaScriptCore) sont générées
 chaque build, embarquées dans l'application et jointes aux releases. La v1.0.0
 ne les contenait pas.
 
+## Emprunts : un modèle à part, un patrimoine net
+
+### Decision
+Un emprunt est un `Loan`, pas une `Transaction`. Son échéancier se calcule à
+partir de ses conditions ; le capital restant dû, le déjà remboursé et les
+échéances à venir ne se saisissent pas. Patrimoine affiche, dès qu'un emprunt
+existe, un patrimoine net égal au brut moins le capital restant dû.
+
+### Reason
+Un passif n'a ni cours ni position : le forcer dans `Transaction` fausserait
+positions, répartition et performance. Calculer plutôt que saisir évite les
+incohérences et tient les chiffres à jour chaque mois. Le taux mensuel est le
+taux nominal divisé par 12, convention des prêts à taux fixe en France ; la
+date de départ est celle du déblocage des fonds, jour où la dette naît, ce qui
+reste défini même avec un différé total.
+
+### Alternatives
+Saisir le capital restant dû à la main : simple, mais à mettre à jour chaque
+mois et sans échéancier. Gérer les prêts immobiliers tout de suite : rejeté,
+sans la valeur du bien le patrimoine net serait trompeur.
+
+### Consequence
+Les intérêts d'emprunt n'entrent pas dans le TWR, qui reste celui des
+placements. Taux variable et remboursements anticipés ne sont pas gérés. Si la
+banque arrondit autrement, la mensualité peut différer de quelques centimes :
+l'écart n'est signalé qu'au-delà de 5 centimes.
+

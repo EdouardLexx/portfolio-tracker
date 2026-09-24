@@ -157,6 +157,41 @@ export interface StockQuote {
   name: string
 }
 
+/**
+ * A fixed-rate loan. Liabilities have no market price and no position: they
+ * follow a repayment schedule, so they live beside `Transaction`, not in it.
+ */
+export type LoanKind = 'student' | 'consumer' | 'car' | 'other'
+export type LoanRepayment = 'amortizing' | 'bullet'
+export type LoanDeferral = 'none' | 'partial' | 'total'
+
+export interface Loan {
+  id: string
+  name: string
+  kind: LoanKind
+  lender: string
+  principalEUR: number
+  annualRatePercent: number
+  /** Number of monthly due dates, deferral included. */
+  durationMonths: number
+  /** Day the funds arrived; due dates follow monthly from there. */
+  startDate: string
+  repayment: LoanRepayment
+  deferral: LoanDeferral
+  deferralMonths: number
+  insuranceMonthlyEUR: number
+  feesEUR: number
+  /** Monthly payment stated by the lender, insurance excluded, to check the input. */
+  bankPaymentEUR: number | null
+}
+
+export const LOAN_KINDS: { kind: LoanKind; label: string }[] = [
+  { kind: 'student', label: 'Prêt étudiant' },
+  { kind: 'consumer', label: 'Crédit à la consommation' },
+  { kind: 'car', label: 'Crédit auto' },
+  { kind: 'other', label: 'Autre prêt' },
+]
+
 export interface HistoricalPrice {
   date: string
   close: number

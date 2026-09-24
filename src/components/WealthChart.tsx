@@ -23,6 +23,34 @@ interface WealthChartProps {
   symbols: Record<string, SymbolInfo>
 }
 
+const PERIODS: Period[] = ['YTD', '1Y', '5Y', 'ALL']
+
+export function PeriodButtons({
+  period,
+  onChange,
+}: {
+  period: Period
+  onChange: (period: Period) => void
+}) {
+  return (
+    <div className="flex gap-1">
+      {PERIODS.map((p) => (
+        <button
+          key={p}
+          onClick={() => onChange(p)}
+          className={`px-3 py-1 text-sm rounded-lg transition-colors ${
+            period === p
+              ? 'bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900'
+              : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+          }`}
+        >
+          {p === 'ALL' ? 'Tout' : p === '1Y' ? '1 an' : p === '5Y' ? '5 ans' : p}
+        </button>
+      ))}
+    </div>
+  )
+}
+
 export function WealthChart({
   title = 'Évolution du patrimoine',
   transactions,
@@ -49,27 +77,12 @@ export function WealthChart({
   const last = data[data.length - 1]
   const change = last.total - first.total
 
-  const periods: Period[] = ['YTD', '1Y', '5Y', 'ALL']
 
   return (
     <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-5 shadow-sm">
       <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
         <h3 className="text-lg font-semibold">{title}</h3>
-        <div className="flex gap-1">
-          {periods.map((p) => (
-            <button
-              key={p}
-              onClick={() => setPeriod(p)}
-              className={`px-3 py-1 text-sm rounded-lg transition-colors ${
-                period === p
-                  ? 'bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900'
-                  : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
-              }`}
-            >
-              {p === 'ALL' ? 'Tout' : p === '1Y' ? '1 an' : p === '5Y' ? '5 ans' : p}
-            </button>
-          ))}
-        </div>
+        <PeriodButtons period={period} onChange={setPeriod} />
       </div>
 
       <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1 mb-3">

@@ -1,10 +1,11 @@
-import type { Transaction, ImportRecord, SymbolInfo } from '../types'
+import type { Transaction, ImportRecord, SymbolInfo, Loan } from '../types'
 import type { SavingsBalance } from '../parsers/savingsManual'
 
 const KEY_TX = 'portfolio.transactions.v2'
 const KEY_IMPORTS = 'portfolio.imports.v2'
 const KEY_SYMBOLS = 'portfolio.symbols.v1'
 const KEY_SAVINGS = 'portfolio.savings.v1'
+const KEY_LOANS = 'portfolio.loans.v1'
 const LEGACY_KEYS = [
   'portfolio.transactions.v1',
   'portfolio.imports.v1',
@@ -74,6 +75,15 @@ export function clearSavings() {
   }
 }
 
+export function loadLoans(): Loan[] {
+  const stored = read<Loan[] | null>(KEY_LOANS, null)
+  return Array.isArray(stored) ? stored : []
+}
+
+export function saveLoans(loans: Loan[]): boolean {
+  return write(KEY_LOANS, loans)
+}
+
 /** Drops the v1 keys once the v2 model is in place. */
 export function clearLegacyData() {
   for (const key of LEGACY_KEYS) {
@@ -86,7 +96,14 @@ export function clearLegacyData() {
 }
 
 export function clearAllData() {
-  for (const key of [KEY_TX, KEY_IMPORTS, KEY_SYMBOLS, KEY_SAVINGS, ...LEGACY_KEYS]) {
+  for (const key of [
+    KEY_TX,
+    KEY_IMPORTS,
+    KEY_SYMBOLS,
+    KEY_SAVINGS,
+    KEY_LOANS,
+    ...LEGACY_KEYS,
+  ]) {
     try {
       localStorage.removeItem(key)
     } catch {

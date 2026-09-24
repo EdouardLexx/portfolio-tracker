@@ -1,12 +1,16 @@
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts'
+import { useMemo } from 'react'
 import type {
   Position,
   Transaction,
   AccountKind,
   HistoricalPrice,
   SymbolInfo,
+  Loan,
 } from '../types'
 import { WealthChart } from '../components/WealthChart'
+import { NetWealthChart } from '../components/NetWealthChart'
+import { buildLoanSchedule, localToday, totalDebtOn } from '../utils/loans'
 import { WealthProjection } from '../components/WealthProjection'
 import { ACCOUNTS } from '../types'
 import { summarisePerAccount } from '../utils/calculations'
@@ -56,6 +60,7 @@ interface WealthPageProps {
   fxHistory: Record<string, HistoricalPrice[]>
   rates: Record<string, number>
   symbols: Record<string, SymbolInfo>
+  loans: Loan[]
   onOpenInvestments: () => void
 }
 
@@ -66,6 +71,7 @@ export function WealthPage({
   fxHistory,
   rates,
   symbols,
+  loans,
   onOpenInvestments,
 }: WealthPageProps) {
   const theme = chartTheme(useIsDark())
@@ -88,9 +94,24 @@ export function WealthPage({
 
   const funded = rows.filter((r) => r.valueEUR > 0)
 
+  // Everything below about debt only exists once a loan is recorded.
+  const debt = useMemo(
+    () =>
+      totalDebtOn(
+        loans.map((loan) => ({ loan, schedule: buildLoanSchedule(loan) })),
+        localToday()
+      ),
+    [loans]
+  )
+  const hasLoans = loans.length > 0
+
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div
+        className={`grid grid-cols-1 gap-4 ${
+          hasLoans ? 'md:grid-cols-2 xl:grid-cols-4' : 'md:grid-cols-3'
+        }`}
+      >
         <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-5 shadow-sm">
           <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
             Patrimoine total
@@ -102,6 +123,19 @@ export function WealthPage({
             sur {formatEUR(totalCost)} apportés
           </p>
         </div>
+        {hasLoans && (
+          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-5 shadow-sm">
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
+              Patrimoine net
+            </p>
+            <p className="text-3xl font-bold text-violet-600 dark:text-violet-400">
+              {formatEUR(totalValue - debt)}
+            </p>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+              après {formatEUR(debt)} restant dû
+            </p>
+          </div>
+        )}
         <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-5 shadow-sm">
           <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
             Gain total
@@ -256,6 +290,17 @@ export function WealthPage({
         rates={rates}
         symbols={symbols}
       />
+
+      {hasLoans && (
+        <NetWealthChart
+          transactions={transactions}
+          history={history}
+          fxHistory={fxHistory}
+          rates={rates}
+          symbols={symbols}
+          loans={loans}
+        />
+      )}
 
       <WealthProjection
         transactions={transactions}
