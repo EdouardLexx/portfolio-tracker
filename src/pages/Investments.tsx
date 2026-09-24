@@ -99,7 +99,7 @@ export function InvestmentsPage({
       )}
 
       <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-5 shadow-sm">
-        <AllocationChart positions={positions} wide />
+        <AllocationChart positions={positions} wide onSelect={setDetail} />
       </div>
 
       <PositionsTable

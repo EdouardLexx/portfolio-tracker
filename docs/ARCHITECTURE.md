@@ -317,7 +317,8 @@ après le rendu et la page s'afficherait une fois avec l'état précédent.
 | Emprunts | `src/pages/Loans.tsx` | un bloc par prêt (indicateurs, courbe du restant dû, échéancier), formulaire d'ajout et de modification |
 | Données | `src/pages/Data.tsx` | import, état du stockage, historique, toutes les transactions groupées et supprimables |
 
-Un clic sur une ligne cotée du tableau des positions ouvre `InstrumentDetail`,
+Un clic sur une ligne cotée du tableau des positions, ou sur sa part, son
+étiquette ou sa ligne dans le camembert de répartition, ouvre `InstrumentDetail`,
 une fiche à la Google Finance : cours et variation, courbe sur 1 j, 5 j, 1 m,
 6 m, YTD, 1 a, 5 a et Max, statistiques du jour. `src/utils/instrumentChart.ts`
 retrouve la ou les dernières séances à partir des horaires publiés par Yahoo

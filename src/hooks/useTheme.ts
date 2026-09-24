@@ -54,6 +54,9 @@ export function chartTheme(isDark: boolean) {
       color: isDark ? '#f3f4f6' : '#111827',
       boxShadow: '0 2px 8px rgba(0,0,0,0.18)',
     },
+    // A pie series has no colour of its own, so Recharts writes its tooltip
+    // rows in black: unreadable on the dark tooltip without this.
+    tooltipItem: { color: isDark ? '#f3f4f6' : '#111827' },
   }
 }
 

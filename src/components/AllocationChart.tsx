@@ -2,6 +2,7 @@ import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts'
 import type { Position } from '../types'
 import { formatEUR, formatNumber } from '../utils/formatters'
 import { useIsDark, chartTheme } from '../hooks/useTheme'
+import { hasMarketChart } from '../utils/instrumentChart'
 
 const COLORS = [
   '#3b82f6', '#eab308', '#f97316', '#8b5cf6', '#10b981',
@@ -16,12 +17,17 @@ interface Slice {
   value: number
   weight: number
   color: string
+  position: Position
+  /** Listed line with a chart to open; gold, savings and cash have none. */
+  clickable: boolean
 }
 
 interface AllocationChartProps {
   positions: Position[]
   /** Wide layout draws the large labelled donut; narrow keeps a compact one. */
   wide?: boolean
+  /** Opens the chart of a listed line, as a click in the positions table does. */
+  onSelect?: (position: Position) => void
 }
 
 /**
@@ -29,7 +35,10 @@ interface AllocationChartProps {
  * accepts one label renderer per Pie, so both are drawn here and the built-in
  * label line is switched off.
  */
-function makeRenderLabel(theme: ReturnType<typeof chartTheme>) {
+function makeRenderLabel(
+  theme: ReturnType<typeof chartTheme>,
+  pick: (slice: Slice) => void
+) {
   return function renderLabel(props: {
   cx: number
   cy: number
@@ -55,7 +64,10 @@ function makeRenderLabel(theme: ReturnType<typeof chartTheme>) {
   const ex = mx + (right ? 16 : -16)
 
   return (
-    <g>
+    <g
+      onClick={payload.clickable ? () => pick(payload) : undefined}
+      style={{ cursor: payload.clickable ? 'pointer' : 'default' }}
+    >
       {payload.weight >= 4 && (
         <text
           x={ix}
@@ -98,9 +110,13 @@ function makeRenderLabel(theme: ReturnType<typeof chartTheme>) {
 export function AllocationChart({
   positions,
   wide = false,
+  onSelect,
 }: AllocationChartProps) {
   const theme = chartTheme(useIsDark())
-  const renderLabel = makeRenderLabel(theme)
+  const pick = (slice: Slice) => {
+    if (slice.clickable) onSelect?.(slice.position)
+  }
+  const renderLabel = makeRenderLabel(theme, pick)
 
   const data: Slice[] = [...positions]
     .filter((p) => p.currentValueEUR > 0)
@@ -111,6 +127,8 @@ export function AllocationChart({
       value: p.currentValueEUR,
       weight: p.weight,
       color: COLORS[i % COLORS.length],
+      position: p,
+      clickable: onSelect != null && hasMarketChart(p.ticker),
     }))
 
   const total = data.reduce((s, d) => s + d.value, 0)
@@ -119,6 +137,7 @@ export function AllocationChart({
     <Tooltip
       formatter={(value: number, name: string) => [formatEUR(value), name]}
       contentStyle={theme.tooltip}
+      itemStyle={theme.tooltipItem}
     />
   )
 
@@ -150,9 +169,14 @@ export function AllocationChart({
                   paddingAngle={2}
                   stroke="none"
                   isAnimationActive={false}
+                  onClick={(_, index: number) => pick(data[index])}
                 >
                   {data.map((d) => (
-                    <Cell key={d.name} fill={d.color} />
+                    <Cell
+                      key={d.name}
+                      fill={d.color}
+                      style={{ cursor: d.clickable ? 'pointer' : 'default', outline: 'none' }}
+                    />
                   ))}
                 </Pie>
                 {tooltip}
@@ -162,7 +186,11 @@ export function AllocationChart({
 
           <ul className="w-full flex-1 min-w-0 space-y-1.5">
             {data.map((d) => (
-              <li key={d.name} className="flex items-center gap-2.5 text-sm">
+              <li
+                key={d.name}
+                onClick={() => pick(d)}
+                className={`flex items-center gap-2.5 text-sm ${d.clickable ? 'cursor-pointer' : ''}`}
+              >
                 <span
                   className="w-2.5 h-2.5 rounded-sm shrink-0"
                   style={{ backgroundColor: d.color }}
@@ -207,9 +235,14 @@ export function AllocationChart({
                 label={renderLabel}
                 labelLine={false}
                 isAnimationActive={false}
+                onClick={(_, index: number) => pick(data[index])}
               >
                 {data.map((d) => (
-                  <Cell key={d.name} fill={d.color} />
+                  <Cell
+                    key={d.name}
+                    fill={d.color}
+                    style={{ cursor: d.clickable ? 'pointer' : 'default', outline: 'none' }}
+                  />
                 ))}
               </Pie>
               {tooltip}
@@ -222,7 +255,10 @@ export function AllocationChart({
           {data.map((d, i) => (
             <li
               key={d.name}
-              className="flex items-center gap-3 text-sm py-2 first:pt-0"
+              onClick={() => pick(d)}
+              className={`flex items-center gap-3 text-sm py-2 first:pt-0 ${
+                d.clickable ? 'cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/60 rounded' : ''
+              }`}
             >
               <span className="text-gray-400 dark:text-gray-500 text-xs tabular-nums w-4 shrink-0">
                 {i + 1}

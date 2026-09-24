@@ -208,6 +208,7 @@ export function WealthPage({
                     name,
                   ]}
                   contentStyle={theme.tooltip}
+                  itemStyle={theme.tooltipItem}
                 />
               </PieChart>
             </ResponsiveContainer>
