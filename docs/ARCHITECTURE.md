@@ -36,6 +36,8 @@ paramètres de liste (`isins`, `symbols`, `currencies`) sont plafonnés à 100
 | `GET /api/history` | historique quotidien (`chart`) | 15 min | oui |
 | `GET /api/fx` | taux, unités par 1 EUR | 60 s | oui |
 | `GET /api/livret-a` | taux du Livret A (Caisse des Dépôts) | 24 h | oui |
+| `GET /api/instrument` | fiche d'un titre : cours, variation, ouverture, haut/bas, capitalisation, PER, dividende, 52 semaines, après-clôture | 60 s (cache des cours) | oui |
+| `GET /api/chart` | courbe d'un titre sur une période (`1d` à `max`) | 1 min à 6 h selon la période | oui |
 
 **Résolution d'un ISIN** (`/api/resolve`) en trois niveaux :
 1. table d'exceptions `ISIN_OVERRIDES` (classes d'actions non indexées, ex.
@@ -314,6 +316,16 @@ après le rendu et la page s'afficherait une fois avec l'état précédent.
 | Épargne | `src/pages/Savings.tsx` | sélecteur Livret A / Cash, soldes, mouvements |
 | Emprunts | `src/pages/Loans.tsx` | un bloc par prêt (indicateurs, courbe du restant dû, échéancier), formulaire d'ajout et de modification |
 | Données | `src/pages/Data.tsx` | import, état du stockage, historique, toutes les transactions groupées et supprimables |
+
+Un clic sur une ligne cotée du tableau des positions ouvre `InstrumentDetail`,
+une fiche à la Google Finance : cours et variation, courbe sur 1 j, 5 j, 1 m,
+6 m, YTD, 1 a, 5 a et Max, statistiques du jour. `src/utils/instrumentChart.ts`
+retrouve la ou les dernières séances à partir des horaires publiés par Yahoo
+(Yahoo renvoie quelques jours de plus pour survivre aux week-ends et aux jours
+fériés), écarte le pré-marché et dessine l'après-clôture en gris pour « 1 j »,
+et traite une crypto en fenêtres glissantes de 24 h. Les graduations sont
+rondes (pas de 1, 2 ou 5) et datées à l'heure de la place de cotation. Or,
+Livret A et cash n'ont pas de fiche : leur cours est calculé par l'application.
 
 Composants : `PerformanceChart` (TWR + indices), `WealthChart` (valeur en €,
 réutilisé par Patrimoine et Investissements via une prop `title`),

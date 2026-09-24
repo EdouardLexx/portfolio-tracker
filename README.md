@@ -115,7 +115,11 @@ figure dans l'application, page **Données**.
   Les deux courbes se suivent : l'une mesure le rendement, l'autre ce que ça
   pèse. Le sélecteur **Tous les comptes /
   PEA / DEGIRO / Ledger / Or** ne s'affiche que sur cette page, la seule où
-  plusieurs comptes cohabitent.
+  plusieurs comptes cohabitent. Un clic sur le nom d'un titre ouvre sa **fiche**,
+  à la manière de Google Finance : cours et variation, courbe sur 1 jour
+  (après-clôture en gris), 5 jours, 1 mois, 6 mois, depuis janvier, 1 an, 5 ans
+  ou depuis la cotation, et les chiffres du jour (ouverture, plus haut, plus
+  bas, capitalisation, PER, dividende, extrêmes sur 52 semaines, volume).
 - **Or** — saisie manuelle des pièces.
 - **Épargne** — Livret A et cash, via un sélecteur. Ni l'un ni l'autre
   n'apparaît dans Investissements : ce ne sont pas des placements.

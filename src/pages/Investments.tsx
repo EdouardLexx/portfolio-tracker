@@ -1,3 +1,4 @@
+import { useCallback, useState } from 'react'
 import type {
   PortfolioSummary,
   Position,
@@ -14,6 +15,7 @@ import { AllocationChart } from '../components/AllocationChart'
 import { AccountBreakdown } from '../components/AccountBreakdown'
 import { PerformanceDistribution } from '../components/PerformanceDistribution'
 import { PositionsTable } from '../components/PositionsTable'
+import { InstrumentDetail } from '../components/InstrumentDetail'
 import { FeesCard } from '../components/FeesCard'
 import { formatEUR, formatNumber } from '../utils/formatters'
 
@@ -44,6 +46,10 @@ export function InvestmentsPage({
   transactions,
   onSelectAccount,
 }: InvestmentsPageProps) {
+  const [detail, setDetail] = useState<Position | null>(null)
+  // Stable, so the detail view does not re-bind its keys on every render.
+  const closeDetail = useCallback(() => setDetail(null), [])
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -96,7 +102,18 @@ export function InvestmentsPage({
         <AllocationChart positions={positions} wide />
       </div>
 
-      <PositionsTable positions={positions} showAccount={scope === 'all'} />
+      <PositionsTable
+        positions={positions}
+        showAccount={scope === 'all'}
+        onSelect={setDetail}
+      />
+      {detail && (
+        <InstrumentDetail
+          symbol={detail.ticker}
+          name={detail.name}
+          onClose={closeDetail}
+        />
+      )}
 
       {/* Performance and value always travel together: one is the return,
           the other what it weighs. */}

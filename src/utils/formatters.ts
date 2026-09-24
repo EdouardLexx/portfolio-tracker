@@ -83,6 +83,14 @@ export function formatHolding(value: number, decimals = 2): string {
   return discreet ? MASK : formatNumber(value, decimals)
 }
 
+/** Market figures (capitalisation, volume): 29,24 Md, 4,57 M. Never masked. */
+export function formatCompactNumber(value: number): string {
+  return new Intl.NumberFormat('fr-FR', {
+    notation: 'compact',
+    maximumFractionDigits: 2,
+  }).format(value)
+}
+
 export function formatMarketCap(value: number): string {
   if (value >= 1e12) return `${(value / 1e12).toFixed(2)} T$`
   if (value >= 1e9) return `${(value / 1e9).toFixed(2)} Md$`

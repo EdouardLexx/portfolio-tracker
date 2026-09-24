@@ -7,13 +7,16 @@ import {
   formatQuantity,
   readableTextOn,
 } from '../utils/formatters'
+import { hasMarketChart } from '../utils/instrumentChart'
 
 interface PositionsTableProps {
   positions: Position[]
   showAccount: boolean
+  /** Opens the chart of a listed line; gold, savings and cash have none. */
+  onSelect?: (position: Position) => void
 }
 
-export function PositionsTable({ positions, showAccount }: PositionsTableProps) {
+export function PositionsTable({ positions, showAccount, onSelect }: PositionsTableProps) {
   return (
     <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm overflow-hidden">
       <div className="p-5 border-b border-gray-100 dark:border-gray-800">
@@ -40,14 +43,32 @@ export function PositionsTable({ positions, showAccount }: PositionsTableProps) 
               const positive = pos.pnlEUR >= 0
               const color = positive ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500 dark:text-red-400'
               const foreign = pos.currency !== 'EUR'
+              const selectable = onSelect != null && hasMarketChart(pos.ticker)
 
               return (
                 <tr
                   key={pos.key}
-                  className="border-t border-gray-50 dark:border-gray-800 hover:bg-gray-50/50 transition-colors"
+                  onClick={selectable ? () => onSelect(pos) : undefined}
+                  className={`border-t border-gray-50 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/60 transition-colors ${
+                    selectable ? 'cursor-pointer' : ''
+                  }`}
                 >
                   <td className="px-4 py-3">
-                    <div className="font-medium text-gray-900 dark:text-gray-100">{pos.name}</div>
+                    {selectable ? (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          onSelect(pos)
+                        }}
+                        className="font-medium text-left text-gray-900 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400 hover:underline"
+                        title="Voir le cours"
+                      >
+                        {pos.name}
+                      </button>
+                    ) : (
+                      <div className="font-medium text-gray-900 dark:text-gray-100">{pos.name}</div>
+                    )}
                     <div className="text-xs text-gray-400 dark:text-gray-500">
                       {pos.ticker || pos.isin}
                     </div>

@@ -2,6 +2,9 @@ import type {
   StockQuote,
   HistoricalPrice,
   SymbolInfo,
+  ChartRange,
+  InstrumentChart,
+  InstrumentInfo,
 } from '../types'
 
 const BASE = '/api'
@@ -17,6 +20,21 @@ export async function resolveIsins(
   })
   const res = await fetch(`${BASE}/resolve?${params}`)
   if (!res.ok) throw new Error('Résolution des ISIN impossible')
+  return res.json()
+}
+
+export async function fetchInstrument(symbol: string): Promise<InstrumentInfo> {
+  const res = await fetch(`${BASE}/instrument?${new URLSearchParams({ symbol })}`)
+  if (!res.ok) throw new Error(`Cours indisponible pour ${symbol}`)
+  return res.json()
+}
+
+export async function fetchChart(
+  symbol: string,
+  range: ChartRange
+): Promise<InstrumentChart> {
+  const res = await fetch(`${BASE}/chart?${new URLSearchParams({ symbol, range })}`)
+  if (!res.ok) throw new Error(`Graphique indisponible pour ${symbol}`)
   return res.json()
 }
 

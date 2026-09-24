@@ -57,6 +57,8 @@ Vérifié dans le code.
 **Interface**
 - Six pages : Patrimoine, Investissements, Or, Épargne, Emprunts, Données.
 - Patrimoine net et courbe brut/net, affichés seulement s'il y a un emprunt.
+- Fiche d'un titre à la Google Finance, depuis le tableau des positions :
+  intraday avec après-clôture, 8 périodes, statistiques du jour.
 - Barre latérale, sélecteur de compte limité à Investissements.
 - Graphes : TWR vs S&P 500 et Nasdaq 100, valeur en euros, donut étiqueté,
   distribution, projection.

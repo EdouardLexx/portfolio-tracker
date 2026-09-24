@@ -55,7 +55,8 @@ public/              statique ; Transactions.csv = amorçage local, ignoré par 
 src/types/           modèle de données unique (Transaction, Position…)
 src/parsers/         un fichier par source + shared.ts (fusion dédupliquée)
 src/utils/           calculs purs : positions, TWR, projection, stockage, formats
-src/hooks/           usePortfolio (orchestrateur), useTheme
+src/hooks/           usePortfolio (orchestrateur), useTheme, useDiscreet,
+                     useInstrument (fiche d'un titre)
 src/api/             client HTTP vers /api
 src/pages/           Wealth, Investments, Gold, Savings, Loans, Data
 src/components/      graphes et blocs réutilisables
@@ -92,6 +93,8 @@ pas chargé).
 4. **Les identifiants de transaction** se construisent avec `makeTransactionId`
    (`src/parsers/shared.ts`) pour hériter de la déduplication.
 5. `usePortfolio` est le seul orchestrateur : état, réseau, persistance.
+   Seule exception : les cours éphémères de la fiche d'un titre, chargés par
+   `useInstrument` et jetés à la fermeture — rien n'y touche le portefeuille.
 6. Le serveur ne fait que **proxy + cache** (et, dans l'exécutable, servir
    l'interface). Aucune logique métier côté serveur.
 

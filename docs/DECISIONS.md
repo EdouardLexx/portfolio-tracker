@@ -424,3 +424,28 @@ Les intérêts gagnés avant le solde de départ ne sont pas mesurés. Le formul
 « Mettre à jour le solde » n'apparaît qu'une fois un mouvement enregistré ; avant,
 c'est « Solde de départ ».
 
+## Fiche d'un titre : données éphémères hors de usePortfolio
+
+### Decision
+La fiche d'un titre charge ses cours via un hook dédié, `useInstrument`, et non
+via `usePortfolio`. Deux routes serveur la servent : `/api/instrument` (cours et
+chiffres du jour, sur le cache des cours existant) et `/api/chart` (courbe par
+période, liste fermée de périodes, symbole au format strict).
+
+### Reason
+Ces données ne concernent pas le portefeuille : elles n'existent que le temps
+d'une consultation et sont jetées à la fermeture. Les faire transiter par
+l'orchestrateur l'alourdirait d'un état sans rapport avec sa mission. L'état est
+indexé par requête, pour qu'une réponse lente d'une période abandonnée
+n'écrase jamais la période affichée.
+
+### Alternatives
+Tout passer par `usePortfolio` : fidèle à la lettre de la règle, mais au prix
+d'un état transitoire dans l'état global. Une page dédiée par titre : plus
+lourde, et la fiche en surimpression garde la liste des positions à portée.
+
+### Consequence
+Le « 1 j » d'une action montre la dernière séance, même un week-end ; une
+crypto, les 24 dernières heures. Les cours affichés dans la fiche sont des
+données de marché publiques : le mode discret ne les masque pas.
+

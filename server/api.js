@@ -285,6 +285,111 @@ app.get('/api/fx', async (req, res) => {
   }
 })
 
+// Yahoo symbols: letters, digits and . - ^ = (BTC-EUR, CW8.PA, ^GSPC, EURUSD=X).
+const SYMBOL = /^[A-Za-z0-9.^=-]{1,20}$/
+
+/**
+ * Detail view of one instrument. Reuses the quote cache of /api/quotes: the
+ * same Yahoo quote object carries the day's range, 52-week extremes, P/E and
+ * the after-hours price.
+ */
+app.get('/api/instrument', async (req, res) => {
+  const { symbol } = req.query
+  if (typeof symbol !== 'string' || !SYMBOL.test(symbol)) {
+    return res.status(400).json({ error: 'symbole invalide' })
+  }
+  try {
+    const q = await cached(`quote:${symbol}`, CACHE_TTL, () => yahooFinance.quote(symbol))
+    if (!q) return res.status(404).json({ error: 'symbole inconnu' })
+    res.json({
+      symbol,
+      name: q.longName || q.shortName || symbol,
+      exchange: q.fullExchangeName ?? null,
+      timezone: q.exchangeTimezoneName ?? 'UTC',
+      quoteType: q.quoteType ?? null,
+      marketState: q.marketState ?? null,
+      currency: q.currency ?? 'EUR',
+      price: q.regularMarketPrice ?? null,
+      change: q.regularMarketChange ?? null,
+      changePercent: q.regularMarketChangePercent ?? null,
+      time: q.regularMarketTime ?? null,
+      previousClose: q.regularMarketPreviousClose ?? null,
+      open: q.regularMarketOpen ?? null,
+      dayHigh: q.regularMarketDayHigh ?? null,
+      dayLow: q.regularMarketDayLow ?? null,
+      volume: q.regularMarketVolume ?? null,
+      averageVolume: q.averageDailyVolume3Month ?? null,
+      marketCap: q.marketCap ?? null,
+      trailingPE: q.trailingPE ?? null,
+      dividendYield: q.dividendYield ?? null,
+      fiftyTwoWeekHigh: q.fiftyTwoWeekHigh ?? null,
+      fiftyTwoWeekLow: q.fiftyTwoWeekLow ?? null,
+      postMarketPrice: q.postMarketPrice ?? null,
+      postMarketChange: q.postMarketChange ?? null,
+      postMarketChangePercent: q.postMarketChangePercent ?? null,
+      postMarketTime: q.postMarketTime ?? null,
+    })
+  } catch (err) {
+    console.error('Error fetching instrument:', err.message)
+    res.status(502).json({ error: err.message })
+  }
+})
+
+/**
+ * How far back and how finely each range of the detail chart looks. "1d" and
+ * "5d" fetch a few extra days so the last sessions are there even after a
+ * weekend or a holiday; the client keeps the sessions it needs.
+ */
+const CHART_RANGES = {
+  '1d': { days: 6, interval: '5m', prePost: true, ttl: 60_000 },
+  '5d': { days: 12, interval: '15m', prePost: false, ttl: 5 * 60_000 },
+  '1mo': { days: 31, interval: '60m', prePost: false, ttl: 15 * 60_000 },
+  '6mo': { days: 183, interval: '1d', prePost: false, ttl: 60 * 60_000 },
+  ytd: { days: null, interval: '1d', prePost: false, ttl: 60 * 60_000 },
+  '1y': { days: 366, interval: '1d', prePost: false, ttl: 60 * 60_000 },
+  '5y': { days: 1827, interval: '1wk', prePost: false, ttl: 6 * 3600_000 },
+  max: { days: 40000, interval: '1mo', prePost: false, ttl: 6 * 3600_000 },
+}
+
+app.get('/api/chart', async (req, res) => {
+  const { symbol, range } = req.query
+  const spec = CHART_RANGES[range]
+  if (typeof symbol !== 'string' || !SYMBOL.test(symbol) || !spec) {
+    return res.status(400).json({ error: 'symbole ou période invalide' })
+  }
+  try {
+    const now = new Date()
+    const period1 =
+      spec.days == null
+        ? new Date(Date.UTC(now.getUTCFullYear(), 0, 1))
+        : new Date(now.getTime() - spec.days * 86_400_000)
+    const result = await cached(`ichart:${symbol}:${range}`, spec.ttl, () =>
+      yahooFinance.chart(symbol, {
+        period1,
+        interval: spec.interval,
+        includePrePost: spec.prePost,
+      })
+    )
+    const meta = result.meta ?? {}
+    const regular = meta.currentTradingPeriod?.regular
+    const post = meta.currentTradingPeriod?.post
+    res.json({
+      timezone: meta.exchangeTimezoneName ?? 'UTC',
+      instrumentType: meta.instrumentType ?? null,
+      gmtoffset: meta.gmtoffset ?? 0,
+      regularStart: regular?.start ?? null,
+      regularEnd: regular?.end ?? null,
+      postEnd: post?.end ?? null,
+      points: (result.quotes || [])
+        .filter((q) => q.close != null)
+        .map((q) => ({ t: new Date(q.date).getTime(), close: q.close })),
+    })
+  } catch (err) {
+    console.error('Error fetching chart:', err.message)
+    res.status(502).json({ error: err.message })
+  }
+})
+
 /** Lets a second launch of the packaged app recognise an instance already running. */
 app.get('/api/health', (req, res) => {
   res.json({ app: 'portfolio-tracker' })

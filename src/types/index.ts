@@ -192,6 +192,51 @@ export const LOAN_KINDS: { kind: LoanKind; label: string }[] = [
   { kind: 'other', label: 'Autre prêt' },
 ]
 
+/** Periods of the instrument detail chart, as the API names them. */
+export type ChartRange = '1d' | '5d' | '1mo' | '6mo' | 'ytd' | '1y' | '5y' | 'max'
+
+/** One instrument as the detail view shows it; null when Yahoo has no value. */
+export interface InstrumentInfo {
+  symbol: string
+  name: string
+  exchange: string | null
+  timezone: string
+  quoteType: string | null
+  marketState: string | null
+  currency: string
+  price: number | null
+  change: number | null
+  changePercent: number | null
+  time: string | null
+  previousClose: number | null
+  open: number | null
+  dayHigh: number | null
+  dayLow: number | null
+  volume: number | null
+  averageVolume: number | null
+  marketCap: number | null
+  trailingPE: number | null
+  dividendYield: number | null
+  fiftyTwoWeekHigh: number | null
+  fiftyTwoWeekLow: number | null
+  postMarketPrice: number | null
+  postMarketChange: number | null
+  postMarketChangePercent: number | null
+  postMarketTime: string | null
+}
+
+export interface InstrumentChart {
+  timezone: string
+  instrumentType: string | null
+  /** Exchange offset from UTC, in seconds. */
+  gmtoffset: number
+  /** Next session's hours: only their time of day matters. */
+  regularStart: string | null
+  regularEnd: string | null
+  postEnd: string | null
+  points: { t: number; close: number }[]
+}
+
 export interface HistoricalPrice {
   date: string
   close: number
