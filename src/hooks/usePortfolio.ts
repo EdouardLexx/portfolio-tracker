@@ -12,7 +12,6 @@ import type {
 } from '../types'
 import { SAVINGS_KINDS } from '../types'
 import { parseDegiroCsv } from '../parsers/degiroCsv'
-import { parseBoursoramaPdf } from '../parsers/boursoramaPdf'
 import { parseLedgerCsv, isLedgerCsv } from '../parsers/ledgerCsv'
 import {
   parseBoursoramaAccountCsv,
@@ -378,6 +377,8 @@ export function usePortfolio(scope: Scope) {
 
         let result
         if (isPdf) {
+          // pdf.js is heavy: loaded on the first PDF, not on every start.
+          const { parseBoursoramaPdf } = await import('../parsers/boursoramaPdf')
           result = await parseBoursoramaPdf(file)
         } else {
           const text = await file.text()
