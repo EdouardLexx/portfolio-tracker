@@ -62,6 +62,8 @@ Vérifié dans le code.
 **Distribution**
 - Exécutables autonomes Windows, macOS (arm64, x64) et Linux, fabriqués par
   Bun et publiés par GitHub Actions sur tag `v*`.
+- Licence AGPL-3.0 ; mentions des licences tierces (dépendances et Bun)
+  générées à chaque build, servies par l'application et jointes aux releases.
 - Linux testé de bout en bout (import, résolution, cours). Windows et macOS
   arm64 testés en CI au démarrage seulement ; macOS x64 non testé.
 - Responsive vérifié à la main (mobile, tablette, large).

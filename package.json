@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "concurrently \"node server.js\" \"vite\"",
     "server": "node server.js",
-    "build": "tsc -b && vite build",
+    "build": "tsc -b && vite build && node scripts/third-party-licenses.mjs",
     "start": "npm run build && node scripts/embed-dist.mjs && node server/standalone.js",
     "package": "npm run build && node scripts/embed-dist.mjs && node scripts/package.mjs",
     "lint": "oxlint",

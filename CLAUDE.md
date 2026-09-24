@@ -46,7 +46,8 @@ Licence : **AGPL-3.0-or-later**, titulaire EdouardLexx (`LICENSE`).
 server.js            entrée de développement : l'API sur :3001
 server/api.js        routes Express (proxy Yahoo + taux Livret A)
 server/standalone.js entrée de l'exécutable : API + interface sur :4719
-scripts/             embarquement de dist/ et compilation des exécutables
+scripts/             licences tierces, embarquement de dist/, compilation
+                     des exécutables ; licenses/bun.md = licence de Bun
 .github/workflows/   fabrication, test et publication des exécutables
 public/              statique ; Transactions.csv = amorçage local, ignoré par git
 src/types/           modèle de données unique (Transaction, Position…)
@@ -158,6 +159,10 @@ affichés : vérifier avant de toucher.
 - `scripts/embed-dist.mjs` **exclut les fichiers de données** de `dist/` : sans
   cela, un build local embarquerait `public/Transactions.csv` dans un
   exécutable publié. Publier depuis la CI (tag `v*`), jamais depuis le poste.
+- **Les mentions de licences tierces** (`dist/THIRD_PARTY_LICENSES.txt`) sont
+  exigées par les licences des dépendances pour toute redistribution. Changer
+  la version de Bun dans la CI impose de mettre à jour
+  `scripts/licenses/bun.md` : `scripts/package.mjs` refuse sinon de compiler.
 
 ## Working instructions for Claude Code
 

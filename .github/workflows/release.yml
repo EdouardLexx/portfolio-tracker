@@ -19,6 +19,8 @@ jobs:
         with:
           node-version: 22
           cache: npm
+      # Changing this version means updating scripts/licenses/bun.md too;
+      # scripts/package.mjs refuses to build otherwise.
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: 1.4.2
@@ -33,6 +35,7 @@ jobs:
             zip -j "$f.zip" "$f"
           done
           tar -czf portfolio-tracker-linux-x64.tar.gz portfolio-tracker-linux-x64
+          cp ../dist/THIRD_PARTY_LICENSES.txt .
       - uses: actions/upload-artifact@v4
         with:
           name: release
@@ -40,6 +43,7 @@ jobs:
             release/*.exe
             release/*.zip
             release/*.tar.gz
+            release/THIRD_PARTY_LICENSES.txt
           if-no-files-found: error
 
   # Runs each executable on its own system: cross-compiled binaries cannot be
@@ -77,6 +81,7 @@ jobs:
           done
           curl -sf http://127.0.0.1:4719/api/health | grep -q portfolio-tracker
           curl -sf http://127.0.0.1:4719/ | grep -q '<div id="root">'
+          curl -sf http://127.0.0.1:4719/THIRD_PARTY_LICENSES.txt | grep -q 'JavaScriptCore'
           echo "OK sur ${{ matrix.os }}"
 
   publish:

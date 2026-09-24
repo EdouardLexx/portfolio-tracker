@@ -367,3 +367,8 @@ partir de ce commit ; la v1.0.0, publiée avant, n'en portait aucune. Le
 titulaire étant seul auteur, il peut encore publier de futures versions sous
 d'autres conditions, mais ne peut pas retirer l'AGPL des versions déjà diffusées.
 
+Les exécutables redistribuent le code des dépendances et le moteur Bun : leurs
+mentions de licence (MIT, Apache-2.0, LGPL pour JavaScriptCore) sont générées à
+chaque build, embarquées dans l'application et jointes aux releases. La v1.0.0
+ne les contenait pas.
+

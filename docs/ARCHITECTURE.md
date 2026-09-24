@@ -203,7 +203,12 @@ Le module porte aussi le drapeau du **mode discret** (`setDiscreet`,
 ## Exécutable
 
 `npm run package` enchaîne trois étapes :
-1. `vite build` produit l'interface dans `dist/` ;
+1. `npm run build` produit l'interface dans `dist/`, puis
+   `scripts/third-party-licenses.mjs` y écrit `THIRD_PARTY_LICENSES.txt` : les
+   licences de chaque dépendance de production (lues via `package-lock.json`,
+   texte compris, y compris les licences d3 que `victory-vendor` range dans ses
+   sous-dossiers) et celle de Bun (`scripts/licenses/bun.md`), dont le moteur
+   JavaScriptCore est sous LGPL ;
 2. `scripts/embed-dist.mjs` la convertit en module JavaScript
    (`build/embedded-assets.js`, fichiers encodés en base64), en **excluant**
    tout fichier de données qu'un build local aurait copié depuis `public/` ;
@@ -219,6 +224,12 @@ Au lancement, `standalone.js` écoute sur `127.0.0.1:4719` et ouvre le navigateu
 sinon il affiche l'erreur et attend Entrée, pour qu'une fenêtre ouverte par
 double-clic ne disparaisse pas avant qu'on l'ait lue. `--no-browser` désactive
 l'ouverture (tests en CI).
+
+Le pied de page de l'application pointe vers le code source (`SOURCE_URL` dans
+`App.tsx`, qu'une version modifiée doit faire pointer vers son propre code,
+AGPL §13) et vers `/THIRD_PARTY_LICENSES.txt`. Ce second lien ne fonctionne
+qu'avec `npm start` et l'exécutable : en `npm run dev`, le fichier n'est pas
+servi.
 
 `.github/workflows/release.yml` : sur un tag `v*`, la CI fabrique les quatre
 exécutables sur Linux, lance ceux de Windows, macOS arm64 et Linux sur leur

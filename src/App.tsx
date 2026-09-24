@@ -9,6 +9,9 @@ import { DataPage } from './pages/Data'
 import { GoldPage } from './pages/Gold'
 import { SavingsPage } from './pages/Savings'
 
+// AGPL §13: a modified version offered to users must point to its own source.
+const SOURCE_URL = 'https://github.com/EdouardLexx/portfolio-tracker'
+
 type Tab = 'wealth' | 'investments' | 'gold' | 'savings' | 'data'
 
 const TABS: { id: Tab; label: string; icon: string }[] = [
@@ -324,6 +327,25 @@ export default function App() {
             </header>
 
             {renderTab()}
+
+            <footer className="mt-10 pt-4 border-t border-gray-200 dark:border-gray-800 flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-400 dark:text-gray-500">
+              <span>© 2026 EdouardLexx · logiciel libre, fourni sans garantie</span>
+              <a
+                href={SOURCE_URL}
+                target="_blank"
+                rel="noreferrer"
+                className="underline hover:text-gray-600 dark:hover:text-gray-300"
+              >
+                Code source (AGPL-3.0)
+              </a>
+              <a
+                href="/THIRD_PARTY_LICENSES.txt"
+                target="_blank"
+                className="underline hover:text-gray-600 dark:hover:text-gray-300"
+              >
+                Licences des composants
+              </a>
+            </footer>
           </div>
         </div>
       </div>

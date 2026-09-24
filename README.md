@@ -381,6 +381,11 @@ licence, avec leur code source publié et la mention de l'auteur d'origine. Cela
 vaut aussi pour une version proposée comme service en ligne. Le texte de
 [LICENSE](LICENSE) fait seul foi.
 
+L'application inclut des composants tiers (React, Express, pdf.js, Bun…),
+chacun sous sa propre licence : leurs mentions sont regroupées dans
+`THIRD_PARTY_LICENSES.txt`, généré à chaque build, joint à chaque release et
+accessible depuis le bas de page de l'application.
+
 Les données de marché viennent de Yahoo Finance et restent soumises à ses propres
 conditions ; la licence ne couvre que le code de ce dépôt.
 

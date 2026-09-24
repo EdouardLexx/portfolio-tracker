@@ -41,4 +41,6 @@ Vider les données de navigation efface le portefeuille.
 
 Le code source est public et ces exécutables sont fabriqués automatiquement par
 GitHub Actions à partir de ce dépôt.
-Logiciel libre sous licence GNU AGPL v3.0 ou ultérieure.
+Logiciel libre sous licence GNU AGPL v3.0 ou ultérieure. Les licences des
+composants tiers inclus sont dans `THIRD_PARTY_LICENSES.txt`, joint à cette
+version et consultable depuis l'application (lien en bas de page).
