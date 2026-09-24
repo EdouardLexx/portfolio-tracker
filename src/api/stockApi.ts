@@ -40,7 +40,7 @@ export async function fetchChart(
 
 export async function fetchQuotes(symbols: string[]): Promise<StockQuote[]> {
   if (!symbols.length) return []
-  const res = await fetch(`${BASE}/quotes?symbols=${symbols.join(',')}`)
+  const res = await fetch(`${BASE}/quotes?${new URLSearchParams({ symbols: symbols.join(',') })}`)
   if (!res.ok) throw new Error('Récupération des cours impossible')
   return res.json()
 }
@@ -56,11 +56,10 @@ export async function fetchHistory(
   return res.json()
 }
 
-
 export async function fetchFxRates(
   currencies: string[]
 ): Promise<Record<string, number>> {
-  const res = await fetch(`${BASE}/fx?currencies=${currencies.join(',')}`)
+  const res = await fetch(`${BASE}/fx?${new URLSearchParams({ currencies: currencies.join(',') })}`)
   if (!res.ok) throw new Error('Récupération des taux de change impossible')
   return res.json()
 }

@@ -17,13 +17,38 @@ const CACHE_MAX_ENTRIES = 5_000
 /** Bounds every list parameter, so one request cannot fan out without limit. */
 const MAX_ITEMS_PER_REQUEST = 100
 
-async function cached(key, ttl, fn) {
+/**
+ * Caches the promise, not its result: identical requests arriving together
+ * (a page load asks for the same quote several times) share one Yahoo call.
+ * A failure is dropped at once so the next request tries again.
+ */
+function cached(key, ttl, fn) {
   const hit = cache.get(key)
   if (hit && Date.now() < hit.expires) return hit.value
-  const value = await fn()
   if (cache.size >= CACHE_MAX_ENTRIES) sweepCache()
+  const value = retryOnce(fn)
   cache.set(key, { expires: Date.now() + ttl, value })
+  value.catch(() => {
+    if (cache.get(key)?.value === value) cache.delete(key)
+  })
   return value
+}
+
+/**
+ * A dropped connection ("fetch failed") is usually gone a moment later; a
+ * refusal from Yahoo (unknown symbol, quota) is not, and is not retried.
+ */
+async function retryOnce(fn) {
+  try {
+    return await fn()
+  } catch (err) {
+    const transient = /fetch failed|ECONNRESET|ETIMEDOUT|EAI_AGAIN|socket hang up/i.test(
+      `${err?.message} ${err?.cause?.code ?? ''}`
+    )
+    if (!transient) throw err
+    await new Promise((resolve) => setTimeout(resolve, 500))
+    return fn()
+  }
 }
 
 /** Drops expired entries, then the oldest ones if the cache is still full. */
@@ -38,6 +63,22 @@ function sweepCache() {
   }
 }
 
+// Yahoo symbols: letters, digits and . - ^ = (BTC-EUR, CW8.PA, ^GSPC, EURUSD=X).
+const SYMBOL = /^[A-Za-z0-9.^=-]{1,20}$/
+const ISIN = /^[A-Z]{2}[A-Z0-9]{9}[0-9]$/
+const CURRENCY = /^[A-Za-z]{3}$/
+const DATE = /^\d{4}-\d{2}-\d{2}$/
+
+/**
+ * A comma-separated query parameter, keeping only well-formed items: one
+ * malformed entry (a badly read statement) must not stop the others from
+ * being priced. A repeated or missing parameter reads as empty.
+ */
+function listParam(value, pattern) {
+  if (typeof value !== 'string') return []
+  return value.split(',').filter((item) => pattern.test(item))
+}
+
 function tooMany(res, list) {
   if (list.length <= MAX_ITEMS_PER_REQUEST) return false
   res.status(400).json({
@@ -46,11 +87,6 @@ function tooMany(res, list) {
   return true
 }
 
-/**
- * ISIN → Yahoo symbol. Needed because broker documents identify instruments
- * by ISIN and product name only, and names drift over time (a fund changing
- * issuer keeps its ISIN but not its name).
- */
 /**
  * Share classes Yahoo's ISIN search does not index. Without these, a Class A
  * and a Class C line are indistinguishable from the product name alone.
@@ -72,12 +108,17 @@ function cleanProductName(name) {
     .trim()
 }
 
+/**
+ * ISIN → Yahoo symbol. Needed because broker documents identify instruments
+ * by ISIN and product name only, and names drift over time (a fund changing
+ * issuer keeps its ISIN but not its name).
+ */
 app.get('/api/resolve', async (req, res) => {
   try {
-    const isins = req.query.isins?.split(',').filter(Boolean) || []
+    const isins = listParam(req.query.isins, ISIN)
     let names = {}
     try {
-      names = req.query.names ? JSON.parse(req.query.names) : {}
+      names = typeof req.query.names === 'string' ? JSON.parse(req.query.names) : {}
     } catch {
       names = {}
     }
@@ -102,7 +143,7 @@ app.get('/api/resolve', async (req, res) => {
           let candidates = (found.quotes || []).filter((q) => q.symbol)
 
           // Yahoo does not index every ISIN; fall back to the product name.
-          if (!candidates.length && names[isin]) {
+          if (!candidates.length && typeof names[isin] === 'string') {
             const cleaned = cleanProductName(names[isin])
             if (cleaned) {
               found = await yahooFinance.search(cleaned, { quotesCount: 10 })
@@ -148,7 +189,7 @@ app.get('/api/resolve', async (req, res) => {
     )
   } catch (err) {
     console.error('Error resolving ISINs:', err.message)
-    res.status(500).json({ error: err.message })
+    res.status(502).json({ error: err.message })
   }
 })
 
@@ -167,6 +208,7 @@ app.get('/api/livret-a', async (req, res) => {
 
       const response = await fetch(url, {
         headers: { 'User-Agent': 'portfolio-tracker' },
+        signal: AbortSignal.timeout(10_000),
       })
       if (!response.ok) throw new Error(`HTTP ${response.status}`)
 
@@ -189,7 +231,7 @@ app.get('/api/livret-a', async (req, res) => {
 
 app.get('/api/quotes', async (req, res) => {
   try {
-    const symbols = req.query.symbols?.split(',') || []
+    const symbols = listParam(req.query.symbols, SYMBOL)
     if (!symbols.length) return res.json([])
     if (tooMany(res, symbols)) return
 
@@ -220,14 +262,19 @@ app.get('/api/quotes', async (req, res) => {
     res.json(quotes)
   } catch (err) {
     console.error('Error fetching quotes:', err.message)
-    res.status(500).json({ error: err.message })
+    res.status(502).json({ error: err.message })
   }
 })
 
 app.get('/api/history', async (req, res) => {
   try {
     const { symbol, from } = req.query
-    if (!symbol) return res.status(400).json({ error: 'symbol required' })
+    if (typeof symbol !== 'string' || !SYMBOL.test(symbol)) {
+      return res.status(400).json({ error: 'symbole invalide' })
+    }
+    if (from !== undefined && (typeof from !== 'string' || !DATE.test(from))) {
+      return res.status(400).json({ error: 'date de début invalide' })
+    }
 
     const period1 = from || '2024-01-01'
     const result = await cached(
@@ -247,7 +294,7 @@ app.get('/api/history', async (req, res) => {
     res.json(data)
   } catch (err) {
     console.error('Error fetching history:', err.message)
-    res.status(500).json({ error: err.message })
+    res.status(502).json({ error: err.message })
   }
 })
 
@@ -257,9 +304,7 @@ app.get('/api/history', async (req, res) => {
  */
 app.get('/api/fx', async (req, res) => {
   try {
-    const currencies = [
-      ...new Set((req.query.currencies || '').split(',').filter(Boolean)),
-    ]
+    const currencies = [...new Set(listParam(req.query.currencies, CURRENCY))]
     if (tooMany(res, currencies)) return
     const rates = { EUR: 1 }
 
@@ -281,12 +326,9 @@ app.get('/api/fx', async (req, res) => {
     res.json(rates)
   } catch (err) {
     console.error('Error fetching fx rates:', err.message)
-    res.status(500).json({ error: err.message })
+    res.status(502).json({ error: err.message })
   }
 })
-
-// Yahoo symbols: letters, digits and . - ^ = (BTC-EUR, CW8.PA, ^GSPC, EURUSD=X).
-const SYMBOL = /^[A-Za-z0-9.^=-]{1,20}$/
 
 /**
  * Detail view of one instrument. Reuses the quote cache of /api/quotes: the

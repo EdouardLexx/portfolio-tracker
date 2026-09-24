@@ -5,7 +5,9 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  /* System fonts only: a web font would call a third party on every launch,
+     against the promise that only ticker codes leave the computer. */
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
