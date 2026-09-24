@@ -28,6 +28,7 @@ import {
 } from '../parsers/goldManual'
 import {
   buildSavingsDeposit,
+  migrateOrphanBalance,
   savingsQuote,
   buildCashMovement,
   cashQuote,
@@ -129,6 +130,14 @@ export function usePortfolio(scope: Scope) {
       .catch(() => setSavingsRate(null))
 
     const stored = loadTransactions()
+    const migrated = migrateOrphanBalance(stored ?? [], loadSavings())
+    if (migrated && saveTransactions(sortTransactionsDesc(migrated))) {
+      clearSavings()
+      setSavings(null)
+      setAllTransactions(sortTransactionsDesc(migrated))
+      setReady(true)
+      return
+    }
     if (stored && stored.length) {
       setAllTransactions(stored)
       setReady(true)
@@ -506,8 +515,12 @@ export function usePortfolio(scope: Scope) {
   )
 
   const addSavingsDeposit = useCallback(
-    (date: string, amountEUR: number): ImportOutcome => {
-      const tx = buildSavingsDeposit(date, amountEUR)
+    (
+      date: string,
+      amountEUR: number,
+      kind: 'deposit' | 'opening' = 'deposit'
+    ): ImportOutcome => {
+      const tx = buildSavingsDeposit(date, amountEUR, kind)
       const { merged, added } = mergeTransactions(allTransactions, [tx])
 
       if (!saveTransactions(merged)) {
@@ -519,14 +532,22 @@ export function usePortfolio(scope: Scope) {
         }
       }
       setAllTransactions(merged)
+      // The opening movement now carries the balance: a typed one would
+      // otherwise be read as interest on top of it.
+      if (added && kind === 'opening') {
+        clearSavings()
+        setSavings(null)
+      }
 
       return {
         ok: added > 0,
         added,
         warnings: [],
         message: added
-          ? 'Versement enregistré.'
-          : 'Ce versement est déjà enregistré (même date, même montant).',
+          ? kind === 'opening'
+            ? 'Solde de départ enregistré.'
+            : 'Versement enregistré.'
+          : 'Ce mouvement est déjà enregistré (même date, même montant).',
       }
     },
     [allTransactions]

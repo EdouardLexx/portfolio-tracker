@@ -15,12 +15,12 @@ import {
   buildLoanSchedule,
   effectiveDeferral,
   loanStatus,
-  localToday,
   paymentMismatch,
   type LoanInstallment,
   type LoanStatus,
 } from '../utils/loans'
 import { formatCompactEUR, formatEUR, formatNumber } from '../utils/formatters'
+import { localToday } from '../utils/dates'
 import { useIsDark, chartTheme } from '../hooks/useTheme'
 
 interface LoansPageProps {

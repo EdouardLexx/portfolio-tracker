@@ -399,3 +399,28 @@ placements. Taux variable et remboursements anticipés ne sont pas gérés. Si l
 banque arrondit autrement, la mensualité peut différer de quelques centimes :
 l'écart n'est signalé qu'au-delà de 5 centimes.
 
+## Un solde de Livret A saisi sans mouvement devient un solde de départ
+
+### Decision
+Quand aucun mouvement de Livret A n'existe, le solde saisi est enregistré comme
+un mouvement « Solde de départ », compté comme apport. Un solde déjà saisi dans
+cette situation est converti au démarrage, daté du jour de sa saisie.
+
+### Reason
+La position Livret A se construit à partir des mouvements. Un solde seul
+n'apparaissait donc que sur sa propre page : ni Patrimoine ni Données ne le
+voyaient, et la page le comptait entièrement comme des intérêts (solde − 0
+versé). En faire un mouvement le rend visible partout, et laisse les intérêts
+se mesurer à partir de ce point, puisque la part d'intérêts qu'il contient est
+inconnue.
+
+### Alternatives
+Compter le solde sans l'enregistrer : les intérêts redeviendraient faux dès le
+premier versement ajouté. Exiger un versement avant tout solde : plus strict,
+mais contre-intuitif pour qui connaît son solde et pas l'historique.
+
+### Consequence
+Les intérêts gagnés avant le solde de départ ne sont pas mesurés. Le formulaire
+« Mettre à jour le solde » n'apparaît qu'une fois un mouvement enregistré ; avant,
+c'est « Solde de départ ».
+

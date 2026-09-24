@@ -2,13 +2,19 @@ import { useState } from 'react'
 import type { Transaction } from '../types'
 import type { ImportOutcome } from '../hooks/usePortfolio'
 import type { SavingsBalance } from '../parsers/savingsManual'
+import { isOpeningBalance } from '../parsers/savingsManual'
 import { formatEUR, formatHolding, formatNumber } from '../utils/formatters'
+import { localToday } from '../utils/dates'
 
 interface SavingsPageProps {
   transactions: Transaction[]
   savings: SavingsBalance | null
   savingsRate: { rate: number; since: string } | null
-  addSavingsDeposit: (date: string, amountEUR: number) => ImportOutcome
+  addSavingsDeposit: (
+    date: string,
+    amountEUR: number,
+    kind?: 'deposit' | 'opening'
+  ) => ImportOutcome
   addCashMovement: (date: string, amountEUR: number) => ImportOutcome
   setSavingsBalance: (balanceEUR: number) => void
   removeTransaction: (id: string) => void
@@ -47,6 +53,9 @@ export function SavingsPage({
     savings ? String(savings.balanceEUR) : ''
   )
   const [outcome, setOutcome] = useState<ImportOutcome | null>(null)
+  const [openingDate, setOpeningDate] = useState(localToday())
+  const [openingAmount, setOpeningAmount] = useState('')
+  const [openingError, setOpeningError] = useState<string | null>(null)
   const [saved, setSaved] = useState(false)
   const [confirmId, setConfirmId] = useState<string | null>(null)
 
@@ -63,6 +72,18 @@ export function SavingsPage({
     }
     setOutcome(addSavingsDeposit(date, value))
     setAmount('')
+  }
+
+  function submitOpening(e: React.FormEvent) {
+    e.preventDefault()
+    const value = parseFloat(openingAmount.replace(',', '.').replace(/\s/g, ''))
+    if (!Number.isFinite(value) || value <= 0) {
+      setOpeningError('Indique le solde actuel de ton livret.')
+      return
+    }
+    const result = addSavingsDeposit(openingDate, value, 'opening')
+    setOpeningError(result.ok ? null : result.message)
+    if (result.ok) setOpeningAmount('')
   }
 
   function submitBalance(e: React.FormEvent) {
@@ -198,6 +219,50 @@ export function SavingsPage({
             </ul>
           )}
         </div>
+      ) : deposits.length === 0 ? (
+      <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-5 shadow-sm">
+        <h3 className="text-lg font-semibold mb-2">Solde de départ</h3>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+          Aucun mouvement pour l'instant : indique le solde actuel de ton livret.
+          Il sert de point de départ, compté comme apport, et les intérêts se
+          mesureront à partir de là. Ajoute ensuite tes versements au fil de
+          l'eau, et mets le solde à jour quand ta banque verse les intérêts.
+        </p>
+
+        <form onSubmit={submitOpening} className="flex flex-wrap items-end gap-3">
+          <label className="block">
+            <span className="text-xs text-gray-500 dark:text-gray-400 block mb-1">Date</span>
+            <input
+              type="date"
+              value={openingDate}
+              max={localToday()}
+              onChange={(e) => setOpeningDate(e.target.value)}
+              className="px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-200"
+            />
+          </label>
+          <label className="block">
+            <span className="text-xs text-gray-500 dark:text-gray-400 block mb-1">Solde (€)</span>
+            <input
+              type="text"
+              inputMode="decimal"
+              value={openingAmount}
+              onChange={(e) => setOpeningAmount(e.target.value)}
+              className="w-40 px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-200"
+            />
+          </label>
+          <button
+            type="submit"
+            className="px-4 py-2 text-sm rounded-lg bg-sky-600 text-white dark:text-gray-900 hover:bg-sky-700"
+          >
+            Enregistrer
+          </button>
+        </form>
+        {openingError && (
+          <p className="mt-4 rounded-lg px-4 py-3 text-sm bg-red-50 dark:bg-red-950 text-red-700 dark:text-red-300">
+            {openingError}
+          </p>
+        )}
+      </div>
       ) : (
       <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-5 shadow-sm">
         <h3 className="text-lg font-semibold mb-2">Mettre à jour le solde</h3>
@@ -291,8 +356,8 @@ export function SavingsPage({
 
         {savingsRows.length === 0 ? (
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            Aucun mouvement. Ajoute au moins un versement pour suivre les
-            intérêts.
+            Aucun mouvement. Commence par ton solde de départ, ou par un
+            versement.
           </p>
         ) : (
           <table className="w-full text-sm">
@@ -308,6 +373,15 @@ export function SavingsPage({
               {savingsRows.map((tx) => (
                 <tr key={tx.id} className="border-b border-gray-50 dark:border-gray-800 last:border-0">
                   <td className="py-2 text-gray-600 dark:text-gray-400">{tx.date}</td>
+                  <td className="py-2 text-gray-600 dark:text-gray-400">
+                    {isOpeningBalance(tx)
+                      ? 'Solde de départ'
+                      : tx.interestEUR != null
+                        ? 'Intérêts'
+                        : tx.amountEUR >= 0
+                          ? 'Versement'
+                          : 'Retrait'}
+                  </td>
                   <td
                     className={`py-2 text-right tabular-nums font-medium ${
                       tx.amountEUR >= 0 ? 'text-gray-900 dark:text-gray-100' : 'text-red-500 dark:text-red-400'

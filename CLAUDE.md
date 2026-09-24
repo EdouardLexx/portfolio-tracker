@@ -121,7 +121,10 @@ affichés : vérifier avant de toucher.
   (USD/once) converti en euros. La prime numismatique n'est pas suivie.
 - **Livret A / cash** : pas de cours. La position tient une unité par mouvement,
   valorisée au solde ; le solde vient des opérations du relevé, ou d'une saisie
-  manuelle à défaut.
+  manuelle à défaut. **Sans mouvement, pas de position** : un solde saisi alors
+  qu'aucun mouvement n'existe devient un mouvement « Solde de départ »
+  (`buildSavingsDeposit(…, 'opening')`), compté comme apport ; les intérêts se
+  mesurent à partir de lui.
 - **Emprunts** (`src/utils/loans.ts`) : modèle à part (`Loan`), jamais des
   `Transaction`. Taux fixe, taux mensuel = nominal / 12, intérêts arrondis au
   centime chaque mois, dernière échéance absorbe les arrondis. La durée inclut

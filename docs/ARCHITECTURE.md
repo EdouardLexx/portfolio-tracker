@@ -90,7 +90,7 @@ Constantes : `ACCOUNTS` (libellés et couleurs), `SAVINGS_KINDS`, `COIN_SPECS`
 | `boursoramaAccountCsv.ts` | relevé de compte CSV | en-têtes `Date Opération` + `Libellé Compte` |
 | `ledgerCsv.ts` | export Ledger Live | en-têtes `Operation Date` + `Currency Ticker` |
 | `goldManual.ts` | saisie manuelle or | — |
-| `savingsManual.ts` | saisie manuelle Livret A / cash | — |
+| `savingsManual.ts` | saisie manuelle Livret A / cash, solde de départ | — |
 | `shared.ts` | utilitaires communs | — |
 
 `shared.ts` porte trois fonctions critiques :

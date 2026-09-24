@@ -139,7 +139,7 @@ annoncée sur Patrimoine).
 ### Date du jour en UTC dans les formulaires Or et Épargne
 *Bug — mineur.*
 `new Date().toISOString().slice(0, 10)` donne la veille entre minuit et 2 h en
-France. `localToday()` (`src/utils/loans.ts`) fait juste ; l'utiliser aussi dans
+France. `localToday()` (`src/utils/dates.ts`) fait juste ; l'utiliser aussi dans
 `src/pages/Gold.tsx` et `src/pages/Savings.tsx`.
 
 ### Signer les exécutables

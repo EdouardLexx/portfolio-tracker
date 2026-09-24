@@ -108,7 +108,7 @@ const MANUAL_SOURCES = [
     account: 'savings',
     source: 'Livret A',
     where: 'onglet Épargne',
-    what: 'Versements et retraits, puis le solde affiché par la banque, si tu n’importes pas le relevé.',
+    what: 'Solde de départ, versements et retraits, puis le solde affiché par la banque, si tu n’importes pas le relevé.',
   },
   {
     account: 'cash',

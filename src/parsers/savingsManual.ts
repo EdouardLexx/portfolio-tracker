@@ -1,6 +1,7 @@
 import type { Transaction, StockQuote } from '../types'
 import { SAVINGS_SYMBOL, CASH_SYMBOL } from '../types'
 import { makeTransactionId } from './shared'
+import { toLocalISODate } from '../utils/dates'
 
 export interface SavingsBalance {
   balanceEUR: number
@@ -13,14 +14,23 @@ export interface SavingsBalance {
  * reads off their bank, which is why the position holds a single unit priced
  * at that balance rather than a unit per euro.
  */
+export const OPENING_SOURCE = 'Solde de départ'
+
+/**
+ * `opening` records the balance the account held when tracking began: it is
+ * counted as paid in, and interest is measured from there. Its own reference
+ * keeps it apart from a deposit of the same amount on the same day.
+ */
 export function buildSavingsDeposit(
   date: string,
-  amountEUR: number
+  amountEUR: number,
+  kind: 'deposit' | 'opening' = 'deposit'
 ): Transaction {
+  const ref = kind === 'opening' ? `${SAVINGS_SYMBOL}-OPENING` : SAVINGS_SYMBOL
   return {
     id: makeTransactionId({
       account: 'savings',
-      orderRef: `${SAVINGS_SYMBOL}-${date}`,
+      orderRef: `${ref}-${date}`,
       date,
       time: '00:00:00',
       isin: SAVINGS_SYMBOL,
@@ -44,9 +54,29 @@ export function buildSavingsDeposit(
     brokerFeesEUR: 0,
     fxFeesEUR: 0,
     feesEUR: 0,
-    orderRef: `${SAVINGS_SYMBOL}-${date}-${amountEUR}`,
-    source: 'Saisie manuelle',
+    orderRef: `${ref}-${date}-${amountEUR}`,
+    source: kind === 'opening' ? OPENING_SOURCE : 'Saisie manuelle',
   }
+}
+
+export function isOpeningBalance(tx: Transaction): boolean {
+  return tx.account === 'savings' && tx.source === OPENING_SOURCE
+}
+
+/**
+ * A balance typed before any movement used to count only on its own page:
+ * without a movement there is no position, so neither Patrimoine nor Données
+ * saw it. It becomes the opening movement it stands for, dated the day it was
+ * typed. Returns null when there is nothing to migrate.
+ */
+export function migrateOrphanBalance(
+  transactions: Transaction[],
+  balance: SavingsBalance | null
+): Transaction[] | null {
+  if (!balance || !(balance.balanceEUR > 0)) return null
+  if (transactions.some((t) => t.account === 'savings')) return null
+  const date = toLocalISODate(new Date(balance.updatedAt))
+  return [...transactions, buildSavingsDeposit(date, balance.balanceEUR, 'opening')]
 }
 
 /**

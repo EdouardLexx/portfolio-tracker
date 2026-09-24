@@ -37,13 +37,6 @@ export interface LoanStatus {
 
 const cents = (x: number) => Math.round(x * 100) / 100
 
-/** Local calendar day: a due date is settled from its morning, not from UTC midnight. */
-export function localToday(): string {
-  const d = new Date()
-  const pad = (n: number) => String(n).padStart(2, '0')
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
-}
-
 /** Capital owed across all loans on `date`. */
 export function totalDebtOn(
   loans: { loan: Loan; schedule: LoanInstallment[] }[],

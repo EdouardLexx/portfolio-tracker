@@ -263,7 +263,10 @@ incohérente dès que plusieurs opérations partagent une date. Les **opération
 font foi**, et l'écart avec cette colonne est signalé à l'import plutôt que
 tranché en silence.
 
-Une saisie manuelle (versements + solde) reste possible sans relevé ; importer un
+Une saisie manuelle reste possible sans relevé. On commence par le **solde de
+départ** du livret : il est enregistré comme un mouvement, compté comme apport,
+et les intérêts se mesurent à partir de lui. On ajoute ensuite les versements,
+puis on met le solde à jour quand la banque verse les intérêts. Importer un
 relevé efface ce solde manuel, devenu moins fiable que les opérations.
 
 Le **taux en vigueur** vient des données ouvertes de la Caisse des Dépôts (jeu
