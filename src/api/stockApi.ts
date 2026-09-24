@@ -9,66 +9,67 @@ import type {
 
 const BASE = '/api'
 
+const SERVER_DOWN =
+  "Serveur local injoignable : l'application a été fermée ou arrêtée. Relance-la, puis recharge la page."
+
+/**
+ * GET on the local API. A rejected fetch (not an HTTP error) means the local
+ * server itself is gone, which the browser reports in English and in jargon
+ * ("NetworkError when attempting to fetch resource", "Failed to fetch").
+ */
+async function getJson<T>(path: string, params: Record<string, string>, failure: string): Promise<T> {
+  const query = new URLSearchParams(params).toString()
+  let res: Response
+  try {
+    res = await fetch(`${BASE}/${path}${query ? `?${query}` : ''}`)
+  } catch {
+    throw new Error(SERVER_DOWN)
+  }
+  if (!res.ok) throw new Error(failure)
+  return res.json()
+}
+
 export async function resolveIsins(
   isins: string[],
   names: Record<string, string> = {}
 ): Promise<SymbolInfo[]> {
   if (!isins.length) return []
-  const params = new URLSearchParams({
-    isins: isins.join(','),
-    names: JSON.stringify(names),
-  })
-  const res = await fetch(`${BASE}/resolve?${params}`)
-  if (!res.ok) throw new Error('Résolution des ISIN impossible')
-  return res.json()
+  return getJson(
+    'resolve',
+    { isins: isins.join(','), names: JSON.stringify(names) },
+    'Résolution des ISIN impossible'
+  )
 }
 
-export async function fetchInstrument(symbol: string): Promise<InstrumentInfo> {
-  const res = await fetch(`${BASE}/instrument?${new URLSearchParams({ symbol })}`)
-  if (!res.ok) throw new Error(`Cours indisponible pour ${symbol}`)
-  return res.json()
+export function fetchInstrument(symbol: string): Promise<InstrumentInfo> {
+  return getJson('instrument', { symbol }, `Cours indisponible pour ${symbol}`)
 }
 
-export async function fetchChart(
-  symbol: string,
-  range: ChartRange
-): Promise<InstrumentChart> {
-  const res = await fetch(`${BASE}/chart?${new URLSearchParams({ symbol, range })}`)
-  if (!res.ok) throw new Error(`Graphique indisponible pour ${symbol}`)
-  return res.json()
+export function fetchChart(symbol: string, range: ChartRange): Promise<InstrumentChart> {
+  return getJson('chart', { symbol, range }, `Graphique indisponible pour ${symbol}`)
 }
 
 export async function fetchQuotes(symbols: string[]): Promise<StockQuote[]> {
   if (!symbols.length) return []
-  const res = await fetch(`${BASE}/quotes?${new URLSearchParams({ symbols: symbols.join(',') })}`)
-  if (!res.ok) throw new Error('Récupération des cours impossible')
-  return res.json()
+  return getJson('quotes', { symbols: symbols.join(',') }, 'Récupération des cours impossible')
 }
 
-export async function fetchHistory(
-  symbol: string,
-  from?: string
-): Promise<HistoricalPrice[]> {
-  const params = new URLSearchParams({ symbol })
-  if (from) params.set('from', from)
-  const res = await fetch(`${BASE}/history?${params}`)
-  if (!res.ok) throw new Error(`Historique indisponible pour ${symbol}`)
-  return res.json()
+export function fetchHistory(symbol: string, from?: string): Promise<HistoricalPrice[]> {
+  return getJson(
+    'history',
+    from ? { symbol, from } : { symbol },
+    `Historique indisponible pour ${symbol}`
+  )
 }
 
-export async function fetchFxRates(
-  currencies: string[]
-): Promise<Record<string, number>> {
-  const res = await fetch(`${BASE}/fx?${new URLSearchParams({ currencies: currencies.join(',') })}`)
-  if (!res.ok) throw new Error('Récupération des taux de change impossible')
-  return res.json()
+export function fetchFxRates(currencies: string[]): Promise<Record<string, number>> {
+  return getJson(
+    'fx',
+    { currencies: currencies.join(',') },
+    'Récupération des taux de change impossible'
+  )
 }
 
-export async function fetchLivretARate(): Promise<{
-  rate: number
-  since: string
-}> {
-  const res = await fetch(`${BASE}/livret-a`)
-  if (!res.ok) throw new Error('Taux du Livret A indisponible')
-  return res.json()
+export function fetchLivretARate(): Promise<{ rate: number; since: string }> {
+  return getJson('livret-a', {}, 'Taux du Livret A indisponible')
 }
