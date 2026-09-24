@@ -20,7 +20,7 @@ historiques affichés.
 `public/Transactions.csv` n'est plus versionné, mais s'il existe localement, un
 `vite build` le copie dans `dist/` avec l'historique réel des ordres.
 Fichiers : `public/Transactions.csv`, `src/hooks/usePortfolio.ts`
-(`seedFromBundledCsv`).
+(`readBundledCsv`). L'exécutable est déjà protégé (`scripts/embed-dist.mjs`).
 Dépendance : uniquement si un déploiement est envisagé.
 
 ## 🟠 High
@@ -75,37 +75,19 @@ Fichier : `src/parsers/degiroCsv.ts` (`isDegiroCsv`).
 
 ### Choisir la cotation de la place d'exécution
 *Bug — affichage.*
-Un ETF irlandais acheté en euros à Amsterdam (`IE00B4L5Y983`, place `XAMS`) est
-résolu vers sa cotation londonienne en dollars (`IWDA.L`). La valeur reste juste
+Un ETF irlandais acheté en euros à Amsterdam (place `XAMS`) peut être résolu
+vers sa cotation londonienne en dollars (suffixe `.L`). La valeur reste juste
 (même fonds, converti), mais le PRU s'affiche en dollars avec le montant en
 euros. Le CSV DEGIRO donne la place d'exécution : s'en servir pour préférer la
 bonne cotation (`XAMS` → `.AS`, `XPAR` → `.PA`…).
 Fichiers : `server/api.js` (`/api/resolve`, fonction `score`),
 `src/parsers/degiroCsv.ts`.
 
-### Unifier la clé de position
-*Bug latent.*
-`buildPositions` regroupe par `tx.symbol || tx.isin || tx.productName`, mais
-`summarisePerAccount` compare `(t.isin || t.productName) === p.key`. Sans effet
-aujourd'hui, faux dès qu'une position à symbole direct couvrira deux comptes.
-Fichier : `src/utils/calculations.ts` — extraire un `positionKey(tx)` partagé.
-
-### Corriger le choix du nom de position
-*Bug mineur.*
-Le commentaire annonce « le nom le plus récent », le code retient le dernier nom
-traité. Impact faible, `name` ne sert qu'en dernier recours.
-Fichier : `src/utils/calculations.ts`, `buildPositions`.
-
 ### Ne plus supposer un patrimoine parti de zéro
 *Bug latent.*
 `growthPerYear = currentValue / years` serait faux si un import démarrait sur un
 solde existant.
 Fichier : `src/utils/projection.ts`, `wealthStats`.
-
-### Traiter les avertissements de lint
-*Amélioration.*
-Cinq avertissements, zéro erreur : `set-state-in-effect` dans `useTheme.ts` et
-`usePortfolio.ts`, `exhaustive-deps` dans `Data.tsx` autour de `labelOf`.
 
 ## 🟢 Low
 
@@ -136,11 +118,12 @@ Fichiers : `src/types/index.ts` (`Loan`), `src/utils/loans.ts`,
 net serait fortement sous-évalué. À faire avec la classe Immobilier (déjà
 annoncée sur Patrimoine).
 
-### Date du jour en UTC dans les formulaires Or et Épargne
-*Bug — mineur.*
-`new Date().toISOString().slice(0, 10)` donne la veille entre minuit et 2 h en
-France. `localToday()` (`src/utils/dates.ts`) fait juste ; l'utiliser aussi dans
-`src/pages/Gold.tsx` et `src/pages/Savings.tsx`.
+### Monter les actions GitHub hors de Node 20
+*Maintenance — CI.*
+`actions/checkout`, `setup-node`, `upload-artifact`, `download-artifact` en
+`@v4` tournent sur Node 20, déprécié par GitHub. Passer aux versions suivantes
+quand la CI l'exige, puis relancer une release de test.
+Fichier : `.github/workflows/release.yml`.
 
 ### Signer les exécutables
 *Amélioration — confiance.*
@@ -163,4 +146,6 @@ Discutées, non engagées. Ne pas traiter comme des tâches.
   (`src/pages/Wealth.tsx`, tableau `CLASSES`), aucune n'est implémentée.
 - **Suivi des dividendes.** Absents des relevés de transactions ; demanderait une
   autre source.
-- **Découpage du bundle.** Le build avertit qu'un chunk dépasse 500 ko.
+- **Découpage du bundle.** pdf.js est déjà chargé à la demande ; le script
+  principal (≈ 820 ko, surtout Recharts et React) déclenche encore
+  l'avertissement de 500 ko de Vite. Sans gêne en local.

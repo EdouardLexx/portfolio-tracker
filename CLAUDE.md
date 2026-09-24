@@ -21,7 +21,9 @@ Fonctionnalités réellement présentes :
 - thème clair/sombre ;
 - mode discret : masque montants et quantités, garde les pourcentages ;
 - emprunts (hors immobilier) : échéancier, capital restant dû, coût total,
-  patrimoine net dans Patrimoine.
+  patrimoine net dans Patrimoine ;
+- fiche d'un titre à la Google Finance (courbe intraday à 10 ans, statistiques
+  du jour), ouverte depuis le tableau des positions ou le camembert.
 
 Utilisateur visé : le propriétaire du portefeuille, seul. Aucune authentification,
 aucun multi-utilisateur.
@@ -54,7 +56,8 @@ scripts/             licences tierces, embarquement de dist/, compilation
 public/              statique ; Transactions.csv = amorçage local, ignoré par git
 src/types/           modèle de données unique (Transaction, Position…)
 src/parsers/         un fichier par source + shared.ts (fusion dédupliquée)
-src/utils/           calculs purs : positions, TWR, projection, stockage, formats
+src/utils/           calculs purs : positions, TWR, projection, emprunts,
+                     stockage, formats, saisie des montants, dates locales
 src/hooks/           usePortfolio (orchestrateur), useTheme, useDiscreet,
                      useInstrument (fiche d'un titre)
 src/api/             client HTTP vers /api
@@ -148,7 +151,13 @@ affichés : vérifier avant de toucher.
   (`src/index.css`).
 - Montants formatés via `src/utils/formatters.ts`, jamais à la main : c'est ce
   qui les soumet au mode discret. Un nombre qui mesure une détention (grammes,
-  sommes versées) passe par `formatHolding`, pas `formatNumber`.
+  sommes versées) passe par `formatHolding`, pas `formatNumber`. Un cours de
+  marché en euros passe par `formatMoney(x, 'EUR')`, qui n'est pas masqué.
+- Montants saisis lus par `parseDecimalInput` (`src/utils/input.ts`), jamais
+  `parseFloat` (« 1 200 » donnerait 1). Date du jour : `localToday()`, jamais
+  `toISOString()` (la veille avant 2 h en France).
+- Aucune ressource tierce dans l'interface (police web, CDN, script) : seuls
+  les codes de titres partent vers Yahoo, via le serveur local.
 - `type` importés avec `import type`.
 
 ## Important constraints
@@ -178,6 +187,37 @@ affichés : vérifier avant de toucher.
   exigées par les licences des dépendances pour toute redistribution. Changer
   la version de Bun dans la CI impose de mettre à jour
   `scripts/licenses/bun.md` : `scripts/package.mjs` refuse sinon de compiler.
+
+## Git and releases
+
+- Dépôt **public** `EdouardLexx/portfolio-tracker`, branche `main`. Seul
+  l'auteur a l'accès en écriture.
+- Commiter chaque changement cohérent, message **en français** qui explique le
+  pourquoi ; pousser en fin de tâche, une fois vérifiée. Avant chaque push,
+  `git diff --cached --name-only` : aucun fichier de données, aucun montant,
+  titre ou ISIN réellement détenu.
+- Identité git **locale au dépôt** : `EdouardLexx
+  <207677044+EdouardLexx@users.noreply.github.com>`. Ne jamais y mettre une
+  adresse personnelle.
+- Une fuite déjà poussée ne s'efface pas par un force-push (le commit reste
+  atteignable) : il faut réécrire l'historique **et** recréer le dépôt.
+- **Release** : l'auteur pousse un tag `vX.Y.Z` ; `.github/workflows/release.yml`
+  fabrique, teste et publie les exécutables. Jamais de release depuis le poste.
+  Vérifier l'état par `gh run list --workflow=release.yml --limit 3`, sans
+  attente bloquante (`gh run watch`).
+
+## Testing without a test suite
+
+- Fonction pure de `src/utils/` ou `src/parsers/` : script jetable hors du
+  dépôt, lancé par `node --experimental-strip-types` (Node ≥ 22), sur un cas
+  dont la réponse est connue.
+- Interface : `npm run dev`, puis le navigateur. `localhost:5173` et
+  `127.0.0.1:5173` sont **deux origines, donc deux portefeuilles** distincts.
+  L'auteur garde ses vraies données sur l'une : demander laquelle sert aux
+  essais, et n'importer, supprimer ni réinitialiser que là. Ailleurs, lecture
+  seule.
+- API : `curl http://127.0.0.1:3001/api/...` ; `server.js` ne se recharge pas
+  seul après une modification de `server/api.js`, le relancer.
 
 ## Working instructions for Claude Code
 

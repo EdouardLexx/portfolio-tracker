@@ -23,11 +23,19 @@ du navigateur, donc elles sont propres à une machine et à un navigateur.
 
 Les routes vivent dans `server/api.js`, qui exporte l'application Express sans
 l'écouter. Deux points d'entrée la démarrent : `server.js` (développement, port
-3001) et `server/standalone.js` (exécutable, port 4719). Express 5, cache mémoire par clé avec TTL (`cached(key, ttl, fn)`),
-borné à 5 000 entrées. Le serveur n'écoute que sur `127.0.0.1` et n'autorise
-aucune origine croisée : le navigateur passe par le proxy `/api` de Vite. Les
-paramètres de liste (`isins`, `symbols`, `currencies`) sont plafonnés à 100
-éléments par requête (400 au-delà).
+3001) et `server/standalone.js` (exécutable, port 4719). Express 5, cache
+mémoire par clé avec TTL (`cached(key, ttl, fn)`), borné à 5 000 entrées. Le
+cache garde la **promesse** : des requêtes identiques simultanées partagent un
+seul appel Yahoo, et un échec est aussitôt retiré du cache. Une coupure réseau
+passagère (`fetch failed`, `ECONNRESET`…) est retentée une fois après 500 ms
+(`retryOnce`) ; un refus de Yahoo ne l'est pas.
+
+Le serveur n'écoute que sur `127.0.0.1` et n'autorise aucune origine croisée :
+le navigateur passe par le proxy `/api` de Vite. Chaque paramètre est validé
+(`SYMBOL`, `ISIN`, `CURRENCY`, `DATE`) : un symbole ou une date invalide donne
+400 ; dans une liste (`isins`, `symbols`, `currencies`), l'élément mal formé est
+écarté sans bloquer les autres. Les listes sont plafonnées à 100 éléments par
+requête (400 au-delà). Une panne en amont (Yahoo, Caisse des Dépôts) répond 502.
 
 | Endpoint | Rôle | TTL | Utilisé ? |
 |---|---|---|---|
@@ -138,8 +146,10 @@ rapport au PEA, puisque ses frais ne pèsent pas sur le coût. L'écart est faib
 ### `calculations.ts`
 
 - `toEur(montant, devise, rates)` — `rates` = unités par 1 EUR.
-- `buildPositions(txs, symbols, quotes, rates)` — regroupe par
-  `tx.symbol || tx.isin || tx.productName`, somme quantités, coûts et frais,
+- `positionKey(tx)` — `tx.symbol || tx.isin || tx.productName` : la seule
+  définition de la ligne à laquelle appartient une transaction.
+- `buildPositions(txs, symbols, quotes, rates)` — regroupe par `positionKey`,
+  garde le nom de produit le plus récent, somme quantités, coûts et frais,
   puis valorise : `currentValueEUR = quantity × toEur(prix, devise, rates)`.
   `avgCostEUR = costEUR / quantity`. `cagrPercent` seulement au-delà d'un an.
   `priced` indique si une cotation a été trouvée.
@@ -229,13 +239,23 @@ Lecture/écriture `localStorage`, chaque accès protégé par `try/catch`.
 
 `formatEUR`, `formatMoney`, `formatNumber`, `formatQuantity` (décimales
 adaptatives pour la crypto), `formatHolding`, `formatCompactEUR`,
-`formatMarketCap`, `readableTextOn` (noir ou blanc selon la luminosité d'un
-fond).
+`formatCompactNumber` (capitalisation, volume), `readableTextOn` (noir ou blanc
+selon la luminosité d'un fond).
 
 Le module porte aussi le drapeau du **mode discret** (`setDiscreet`,
 `isDiscreet`). Quand il est levé, `formatEUR`, `formatCompactEUR`,
 `formatQuantity` et `formatHolding` renvoient `•••` ; `formatNumber`,
-`formatPercent` et `formatMoney` (prix unitaires en devise) sont inchangés.
+`formatCompactNumber` et `formatMoney` (prix unitaires, cours de marché) sont
+inchangés. Un prix public affiché en euros (cours de l'or) passe donc par
+`formatMoney(x, 'EUR')`, pas par `formatEUR`.
+
+### `input.ts` et `dates.ts`
+
+`parseDecimalInput` lit un montant saisi dans un formulaire (« 1 234,56 »,
+« 1.234,56 », « 1234.56 ») et renvoie `NaN` s'il est illisible : un
+`parseFloat` direct lisait « 1 200 » comme 1. Tous les formulaires s'en servent.
+`localToday` et `toLocalISODate` donnent la date du jour **locale** ;
+`toISOString` donnerait la veille entre minuit et 2 h en France.
 
 ## Exécutable
 
@@ -275,7 +295,7 @@ système (réponse de `/api/health` et de la page), puis publie la release avec
 
 ## Gestion de l'état — `src/hooks/usePortfolio.ts`
 
-Hook unique (~620 lignes) qui centralise état, réseau et persistance.
+Hook unique (~690 lignes) qui centralise état, réseau et persistance.
 Il prend un `scope` (`'all'` ou un compte) et expose notamment :
 
 - `allTransactions` — tout ; `transactions` — filtré par scope **et privé
@@ -287,19 +307,32 @@ Il prend un `scope` (`'all'` ou un compte) et expose notamment :
   `addCashMovement`, `setSavingsBalance`, `removeTransaction`,
   `removeTransactionsAt`, `resetData`, `reload`.
 
-**Amorçage** : au tout premier lancement (ou après réinitialisation), si un
-fichier `public/Transactions.csv` existe localement, il est lu et importé ; il
-est ignoré par git, et son absence laisse simplement l'application vide.
-Ensuite le `localStorage` fait foi.
+**Amorçage** : l'état initial est lu une seule fois depuis le `localStorage`
+(`readStoredPortfolio`, initialiseurs paresseux de `useState`) ; l'effet de
+montage ne fait qu'écrire (migration du solde Livret A orphelin, clés
+obsolètes) et lancer les requêtes. Au tout premier lancement (ou après
+réinitialisation), si un fichier `public/Transactions.csv` existe localement,
+il est lu et importé (`readBundledCsv`) ; il est ignoré par git, et son absence
+laisse simplement l'application vide. Ensuite le `localStorage` fait foi.
+
+**Données de marché** : chaque changement des transactions relance
+`loadMarketData`. Un compteur (`loadId`) écarte le résultat d'un chargement
+dépassé par un plus récent, pour qu'une réponse lente n'écrase pas des données
+à jour.
 
 **Cotations synthétiques** : or, Livret A et cash n'ont pas de cours de marché.
 Leurs `StockQuote` sont fabriquées dans le hook (`goldQuotes`, `savingsQuote`,
 `cashQuote`) et injectées dans le tableau passé à `buildPositions`, si bien que
-le reste du code les traite comme n'importe quelle ligne.
+le reste du code les traite comme n'importe quelle ligne. Le solde du Livret A
+vient de `savingsBalance` (`savingsManual.ts`), partagé avec la page Épargne :
+intérêts d'un relevé importé, sinon solde saisi, sinon somme versée.
 
-`useTheme.ts` gère le thème (classe `dark` sur `<html>`, mémorisé) et expose
-`useIsDark()` / `chartTheme(isDark)` : les graphes peignent en SVG et ont besoin
-des couleurs comme **valeurs**, pas comme classes CSS.
+`useTheme.ts` gère le thème (classe `dark` sur `<html>`, posée avant l'affichage
+par `useLayoutEffect`, mémorisée) et expose `useIsDark()` (abonné à la classe
+de `<html>` par `useSyncExternalStore`) / `chartTheme(isDark)` : les graphes
+peignent en SVG et ont besoin des couleurs comme **valeurs**, pas comme
+classes CSS. `chartTheme().tooltipItem` colore les lignes d'infobulle d'un
+camembert, que Recharts écrirait sinon en noir.
 
 `useDiscreet.ts` pilote le mode discret (clé `portfolio.discreet.v1`). Il pose le
 drapeau des formateurs **de façon synchrone**, à l'initialisation et au clic,
@@ -341,7 +374,8 @@ réutilisé par Patrimoine et Investissements via une prop `title`),
 ## Flux d'une transaction, de l'import à l'affichage
 
 1. **Dépôt** d'un fichier sur la page Données (`DataPage`), ou saisie manuelle.
-2. **Aiguillage** dans `importFiles` (`usePortfolio.ts`) : PDF → Boursorama ;
+2. **Aiguillage** dans `importFiles` (`usePortfolio.ts`) : PDF → Boursorama
+   (pdf.js est chargé à ce moment-là, par `import()`, pas au démarrage) ;
    sinon détection au contenu Ledger → relevé Boursorama → DEGIRO.
 3. **Parsing** : le parseur renvoie `ParseResult { transactions, warnings }`,
    chaque ligne normalisée en `Transaction` avec un `id` calculé.
@@ -363,6 +397,10 @@ réutilisé par Patrimoine et Investissements via une prop `title`),
   crypto, `GC=F` pour l'or, `EUR<DEVISE>=X` pour le change, `^GSPC` et `^NDX`
   pour les indices.
 - **Caisse des Dépôts** (données ouvertes) — taux du Livret A, indicatif.
+
+Rien d'autre : aucune police web, aucun script ni service tiers. Le navigateur
+ne parle qu'au serveur local, qui ne transmet que des codes de titres, de
+devises et d'indices.
 
 ## Authentification, import/export
 

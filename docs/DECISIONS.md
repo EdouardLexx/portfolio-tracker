@@ -449,3 +449,44 @@ Le « 1 j » d'une action montre la dernière séance, même un week-end ; une
 crypto, les 24 dernières heures. Les cours affichés dans la fiche sont des
 données de marché publiques : le mode discret ne les masque pas.
 
+## Aucune ressource tierce dans l'interface
+
+### Decision
+L'interface n'appelle aucun service extérieur : police système plutôt que
+Google Fonts, aucun CDN, aucun script tiers. Seul le serveur local contacte
+Yahoo Finance et la Caisse des Dépôts.
+
+### Reason
+Le README promet que seuls les codes des titres quittent l'ordinateur. Une
+police chargée depuis Google transmettait l'adresse IP et l'heure de chaque
+ouverture, et bloquait l'affichage de la bonne police hors connexion.
+
+### Alternatives
+Embarquer la police Inter dans le build (paquet `@fontsource/inter`, licence
+OFL) : même rendu, sans appel tiers, mais une dépendance de plus pour un gain
+purement esthétique.
+
+### Consequence
+L'apparence suit la police du système (Segoe UI, San Francisco, Roboto…).
+Toute nouvelle ressource doit être servie par l'application elle-même.
+
+## Une seule nouvelle tentative sur coupure réseau
+
+### Decision
+Le cache du serveur retente une fois, après 500 ms, un appel qui échoue sur une
+erreur de connexion (`fetch failed`, `ECONNRESET`, `ETIMEDOUT`…). Un refus de
+Yahoo (symbole inconnu, quota) n'est pas retenté. Le cache garde la promesse,
+si bien que des requêtes simultanées partagent l'appel et sa nouvelle tentative.
+
+### Reason
+Au chargement, la page demande d'un bloc une dizaine d'historiques ; une coupure
+d'une seconde les faisait tous échouer, et les graphes restaient vides jusqu'au
+rechargement.
+
+### Alternatives
+Réessayer côté navigateur : chaque requête aurait retenté séparément,
+multipliant les appels vers Yahoo au pire moment.
+
+### Consequence
+Une panne durable coûte 500 ms de plus avant l'erreur, qui répond 502.
+

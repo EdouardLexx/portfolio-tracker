@@ -110,8 +110,7 @@ figure dans l'application, page **Données**.
   implémentées (immobilier, assurance-vie, comptes courants) y sont listées en
   pointillés pour montrer où elles se brancheraient.
 - **Investissements** — dans l'ordre : répartition par compte, répartition,
-  positions, performance
-  (en %), valeur (en €), puis répartition par compte, distribution et frais.
+  positions, performance (en %), valeur (en €), distribution et frais.
   Les deux courbes se suivent : l'une mesure le rendement, l'autre ce que ça
   pèse. Le sélecteur **Tous les comptes /
   PEA / DEGIRO / Ledger / Or** ne s'affiche que sur cette page, la seule où
@@ -140,8 +139,8 @@ classe de couleur resterait noir sur fond sombre.
 
 Le **mode discret**, juste au-dessus, remplace par `•••` tout ce qui révèle la
 taille du patrimoine : montants en euros (graphes compris) et quantités détenues.
-Pourcentages et prix unitaires restent visibles, puisqu'ils ne disent pas combien
-on possède. Pratique pour une capture d'écran ; le choix se retient par
+Pourcentages, prix unitaires et cours de marché (cours de l'or, fiche d'un titre)
+restent visibles, puisqu'ils ne disent pas combien on possède. Pratique pour une capture d'écran ; le choix se retient par
 navigateur.
 
 ## Lancer depuis le code
@@ -178,19 +177,33 @@ courtier s'arrêtent à son parseur.
 - **`server.js`** — point d'entrée de développement : sert l'API sur le port 3001.
 - **`server/standalone.js`** — point d'entrée de l'exécutable : sert l'API et
   l'interface sur le port 4719, puis ouvre le navigateur.
-- **`src/parsers/`** — un fichier par source : `degiroCsv.ts`, `boursoramaPdf.ts`,
-  `ledgerCsv.ts`, `goldManual.ts`, `savingsManual.ts`, et `shared.ts` pour la
-  fusion dédupliquée commune.
+- **`src/parsers/`** — un fichier par source : `degiroCsv.ts`, `boursoramaPdf.ts`
+  (chargé seulement au premier PDF), `ledgerCsv.ts`, `boursoramaAccountCsv.ts`,
+  `goldManual.ts`, `savingsManual.ts`, et `shared.ts` pour la fusion
+  dédupliquée commune.
+- **`src/hooks/usePortfolio.ts`** — l'orchestrateur : état, appels réseau,
+  persistance. `useInstrument.ts` charge à part les cours éphémères de la fiche
+  d'un titre.
 - **`src/hooks/useTheme.ts`** — thème clair/sombre, et les couleurs que les
   graphiques ne peuvent pas prendre via des classes CSS.
 - **`src/hooks/useDiscreet.ts`** — mode discret, mémorisé par navigateur.
 - **`src/utils/store.ts`** — persistance `localStorage` : transactions, historique
-  des imports, symboles résolus.
+  des imports, symboles résolus, solde saisi du Livret A, emprunts.
 - **`src/utils/calculations.ts`** — positions, P&L, pondérations, conversion des
-  devises, totaux par compte.
+  devises, totaux par compte. À côté : `performance.ts` (TWR), `projection.ts`,
+  `loans.ts` (échéanciers), `wealthSeries.ts`, `instrumentChart.ts` (courbes de
+  la fiche), `input.ts` (lecture des montants saisis).
 - **`public/Transactions.csv`** — amorçage facultatif : s'il existe localement,
   il est importé à la première ouverture (et après une réinitialisation). Il
   est ignoré par git ; sans lui, l'application démarre vide.
+
+Le détail (routes, clés de stockage, flux d'une transaction) est dans
+[`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md), les choix et leurs raisons dans
+[`docs/DECISIONS.md`](docs/DECISIONS.md), l'état et les bugs connus dans
+[`docs/PROJECT_STATUS.md`](docs/PROJECT_STATUS.md), la suite dans
+[`docs/TODO.md`](docs/TODO.md). [`CLAUDE.md`](CLAUDE.md) résume tout cela, avec
+les règles à respecter, pour reprendre le projet dans une nouvelle session
+Claude Code.
 
 ## Gestion des données
 
@@ -369,8 +382,12 @@ que le compte le plus ancien.
 **CAGR** — affiché seulement au-delà d'un an de détention. En deçà, annualiser
 produit des valeurs absurdes (25 jours de détention à +30 % donnerait +4000 %/an).
 
-**Frais** — les frais de courtage et de change sont inclus dans le prix de revient
-(`totalEUR` du CSV) et affichés séparément sur la page Résumé.
+**Frais** — affichés séparément dans la carte Frais de la page Investissements.
+Leur place dans le prix de revient **dépend de la source** : inclus pour le PEA
+(montant net de l'avis d'opéré) et Ledger (frais de réseau), exclus pour DEGIRO
+(colonne « Montant EUR », avant frais). La performance DEGIRO est donc
+légèrement flattée par rapport aux autres comptes ; l'harmonisation est notée
+dans `docs/TODO.md`.
 
 ## Limites connues
 

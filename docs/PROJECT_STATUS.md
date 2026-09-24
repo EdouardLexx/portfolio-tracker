@@ -1,13 +1,15 @@
 # Project Status
 
-Photographie du dépôt à la date de rédaction. Établi en lisant le code, pas
-l'historique de conversation.
+Photographie du dépôt au 24 septembre 2026, après un audit complet du code.
+Établi en lisant le code, pas l'historique de conversation.
 
 ## Current state
 
 Application fonctionnelle en local, utilisée au quotidien par son auteur.
 `npx tsc -b --noEmit` passe sans erreur, `npm run build` réussit, `npm run lint`
-renvoie **5 avertissements, 0 erreur**.
+renvoie **0 avertissement, 0 erreur** (une seule exception motivée en
+commentaire, dans `usePortfolio.ts`). `npm audit --omit=dev` : 0 vulnérabilité.
+Dernière version publiée : tag `v1.3.1`.
 
 Six comptes sont gérés (PEA, DEGIRO, Ledger, or, Livret A, cash), quatre formats
 de fichiers sont reconnus, deux modes de saisie manuelle existent.
@@ -57,13 +59,17 @@ Vérifié dans le code.
 **Interface**
 - Six pages : Patrimoine, Investissements, Or, Épargne, Emprunts, Données.
 - Patrimoine net et courbe brut/net, affichés seulement s'il y a un emprunt.
-- Fiche d'un titre à la Google Finance, depuis le tableau des positions :
-  intraday avec après-clôture, 8 périodes, statistiques du jour.
+- Fiche d'un titre à la Google Finance, depuis le tableau des positions ou le
+  camembert de répartition (part, étiquette ou ligne de la liste) : intraday
+  avec après-clôture, 8 périodes, statistiques du jour.
 - Barre latérale, sélecteur de compte limité à Investissements.
 - Graphes : TWR vs S&P 500 et Nasdaq 100, valeur en euros, donut étiqueté,
   distribution, projection.
-- Thème clair/sombre mémorisé, graphes inclus.
-- Mode discret mémorisé : montants et quantités masqués, graphes inclus.
+- Thème clair/sombre mémorisé, graphes et infobulles inclus ; aucune classe de
+  couleur sans variante `dark:` (vérifié par balayage des fichiers).
+- Mode discret mémorisé : montants et quantités masqués, graphes inclus ;
+  vérifié page par page, seuls les cours de marché restent visibles.
+- Aucun appel à un service tiers depuis l'interface (police système).
 
 **Distribution**
 - Exécutables autonomes Windows, macOS (arm64, x64) et Linux, fabriqués par
@@ -82,8 +88,9 @@ module inachevé repéré.
 Le projet est versionné sur GitHub, dans un dépôt **public**. Les fichiers de
 données (`*.csv`, `*.pdf`, `*.xlsx`) sont exclus par `.gitignore`.
 
-Le dernier travail terminé porte sur la page Données (accès à toutes les lignes
-et suppression) et sur la correction du calcul TWR.
+Le dernier travail terminé est un audit complet du code (voir *Recently
+changed*), après l'ajout des emprunts, de la fiche d'un titre et du clic depuis
+le camembert.
 
 ## Known issues
 
@@ -101,29 +108,7 @@ et suppression) et sur la correction du calcul TWR.
   aligner `degiroCsv.ts` sur la colonne « Montant négocié EUR » (index 15).
   Attention : changer cela modifie tous les chiffres historiques affichés.
 
-### 2. Clé d'agrégation incohérente dans `summarisePerAccount`
-
-- **Description** : `buildPositions` regroupe par `tx.symbol || tx.isin ||
-  tx.productName`, mais la répartition multi-comptes de `summarisePerAccount`
-  compare `(t.isin || t.productName) === p.key`, sans `t.symbol`.
-- **Impact** : nul aujourd'hui — les positions à symbole direct (crypto, or,
-  épargne) n'existent que dans un seul compte, donc la branche multi-comptes
-  n'est jamais atteinte pour elles.
-- **Cause** : le champ `symbol` a été ajouté après l'écriture de cette fonction.
-- **Piste** : extraire une fonction `positionKey(tx)` et l'utiliser aux deux
-  endroits (`src/utils/calculations.ts`).
-
-### 3. Le nom de position retenu n'est pas le plus récent
-
-- **Description** : dans `buildPositions`, `if (tx.date >= b.firstDate) b.name =
-  tx.productName` s'exécute après la mise à jour de `firstDate`, si bien que la
-  condition est presque toujours vraie et que le dernier nom traité l'emporte.
-  Le commentaire annonce pourtant « le nom le plus récent ».
-- **Impact** : faible. `name` n'est utilisé qu'en dernier recours, après
-  `quote?.name` et `info?.name`.
-- **Piste** : comparer explicitement à une `lastDate` distincte.
-
-### 4. `growthPerYear` suppose un patrimoine parti de zéro
+### 2. `growthPerYear` suppose un patrimoine parti de zéro
 
 - **Description** : `wealthStats` calcule `growthPerYear = currentValue / years`
   (`src/utils/projection.ts`).
@@ -132,61 +117,81 @@ et suppression) et sur la correction du calcul TWR.
 - **Piste** : mesurer la valeur au premier point de la série plutôt que de
   supposer zéro.
 
-### 5. `public/Transactions.csv` part dans un build local
+### 3. `public/Transactions.csv` part dans un build local
 
 - **Description** : le fichier n'est plus versionné, mais s'il existe dans
   `public/` au moment d'un `vite build`, il est copié tel quel dans `dist/`.
 - **Impact** : un `dist/` construit sur le poste et déployé exposerait
   l'historique réel des ordres. Sans effet en local ni sur le dépôt.
+- **Parade en place** : `scripts/embed-dist.mjs` exclut tout fichier de données
+  de l'exécutable, et les releases ne se fabriquent qu'en CI, où le fichier
+  n'existe pas.
 - **Piste** : sortir l'amorçage de `public/`, ou supprimer le fichier avant de
   construire pour un déploiement.
 
-### 6. Code mort — résolu
-
-Les routes `/api/fundamentals`, `/api/exchange-rate` et le type
-`StockFundamentals` ont été supprimés.
-
-### 7. Avertissements de lint (5)
-
-- `react(set-state-in-effect)` dans `useTheme.ts` (1) et `usePortfolio.ts` (2).
-- `react-hooks(exhaustive-deps)` dans `Data.tsx` (2), autour de `labelOf` et
-  `symbols`.
-- Impact : aucun comportement fautif observé.
-
-### 8. Fragilités de dépendances
+### 4. Fragilités de dépendances
 
 - **Recharts 2.15 + React 19** : les formes ne se rendent pas si les animations
   sont actives, d'où `isAnimationActive={false}` partout. Une montée de version
   doit être revérifiée graphe par graphe.
 - **Yahoo Finance** : API non officielle. Des erreurs `fetch failed` passagères
-  ont été observées sous rafale de requêtes ; elles se résorbent seules.
+  ont été observées sous rafale de requêtes ; le serveur les retente désormais
+  une fois (`retryOnce`), et un échec persistant répond 502.
 - **Recharts et conteneur de largeur nulle** : un graphe monté dans un conteneur
   à 0 px reste vide jusqu'au rechargement. Observé uniquement dans un panneau de
   test replié.
 
+### 5. Choix de cotation et d'attribution de compte
+
+Détaillés dans `docs/TODO.md` (section Medium) : ETF irlandais résolu en
+dollars à Londres, compte-titres Boursorama rangé dans DEGIRO, relevé
+Boursorama non-Livret A compté comme Livret A, export DEGIRO anglais refusé.
+
+### 6. Actions GitHub en Node 20
+
+`actions/checkout`, `setup-node`, `upload-artifact` et `download-artifact` sont
+en `@v4`, qui tournent sur Node 20, déprécié par GitHub. Sans effet tant que
+GitHub les accepte ; à monter de version à la prochaine alerte de la CI.
+
 ## Recently changed
 
-- Calcul TWR extrait dans `src/utils/performance.ts` et corrigé : les flux d'un
-  jour non valorisable sont reportés, les indices sont reportés à leur dernière
-  valeur. Auparavant un achat tombant un jour férié américain était compté comme
-  un gain.
-- Page Données : accès à **toutes** les lignes, groupées par compte, avec filtre
-  et suppression multiple par position.
-- Onglet Épargne remplaçant Livret A, avec sélecteur Livret A / Cash.
-- Relevé de compte Boursorama pris en charge, intérêts reconnus.
-- Page Patrimoine : courbe d'évolution et bloc « Rythme et projection ».
-- Fusion de Résumé et Positions en un onglet Investissements, réordonné.
-- Thème sombre, couleur de texte par défaut posée sur `body`, pastilles de
-  compte à contraste adaptatif.
-- Suppression du panneau de statistiques fondamentales.
+Du plus récent au plus ancien.
+
+- **Audit complet (septembre 2026)** :
+  - positions : le nom affiché est enfin le plus récent ; la clé d'agrégation
+    est une seule fonction (`positionKey`), ce qui corrige la répartition par
+    compte d'une ligne à symbole détenue sur deux comptes ;
+  - saisie : `parseDecimalInput` remplace `parseFloat`, qui lisait « 1 200 »
+    comme 1 € (Épargne, Or, Emprunts) ;
+  - dates locales dans les formulaires Or et Épargne et dans les périodes des
+    graphes ;
+  - Données : la colonne « Cours » ne montre plus le montant d'un versement
+    Livret A ou cash (fuite en mode discret) ; la sélection se vide si la
+    liste change ;
+  - Livret A : intérêts importés affichés avec leur montant (et non
+    « +0,00 € ») ; calcul du solde partagé (`savingsBalance`) ;
+  - thème sombre : bandeaux de résultat, zone de dépôt et pastilles corrigés,
+    plus de flash clair au chargement ;
+  - `usePortfolio` : état initial lu une fois, chargements périmés écartés ;
+  - serveur : nouvelle tentative sur coupure réseau, 502 en cas de panne amont,
+    validation de tous les paramètres, requêtes simultanées partagées ;
+  - police système au lieu de Google Fonts ; pdf.js chargé à la demande
+    (script principal de 1,25 Mo à 820 ko) ; code mort supprimé.
+- Camembert : infobulle lisible en thème sombre, clic vers la fiche du titre.
+- Fiche d'un titre à la Google Finance (`InstrumentDetail`, `useInstrument`,
+  `/api/instrument`, `/api/chart`).
+- Livret A : un solde saisi sans mouvement devient un « Solde de départ »,
+  compté partout (Patrimoine, Données).
+- Onglet Emprunts et patrimoine net.
+- Licence AGPL-3.0, mentions des licences tierces.
+- Exécutables autonomes multi-plateformes publiés par la CI.
+- Mode discret.
 
 ## Current focus
 
-Consolidation en local. L'auteur a explicitement écarté l'hébergement distant
-pour l'instant, au profit d'un fonctionnement propre sur son poste.
-
-Le travail récent porte sur la fiabilité des calculs (audit du TWR) et sur le
-contrôle des données (consultation et suppression).
+Consolidation en local et diffusion aux spectateurs d'un tutoriel YouTube, par
+les exécutables. L'auteur a explicitement écarté l'hébergement distant pour
+l'instant, au profit d'un fonctionnement propre sur son poste.
 
 ## Next steps
 
