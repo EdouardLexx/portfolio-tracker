@@ -26,6 +26,8 @@ aucun multi-utilisateur.
 
 État : fonctionnel en local, utilisé au quotidien. **Aucun test automatisé.**
 
+Licence : **AGPL-3.0-or-later**, titulaire EdouardLexx (`LICENSE`).
+
 ## Tech stack
 
 - **Langage** : TypeScript (front), JavaScript (serveur `server/`).
@@ -173,3 +175,5 @@ affichés : vérifier avant de toucher.
    `docs/DECISIONS.md` pour le pourquoi, `docs/PROJECT_STATUS.md` pour l'état,
    `docs/TODO.md` pour la suite.
 6. Ne pas ajouter de dépendance sans nécessité ; ce projet tourne en local.
+   Toute dépendance doit avoir une licence compatible avec l'AGPL-3.0
+   (MIT, BSD, ISC, Apache-2.0, MPL-2.0… ; ni GPL-2.0-only, ni propriétaire).

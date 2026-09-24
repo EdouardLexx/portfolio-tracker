@@ -341,3 +341,29 @@ Les exécutables ne sont **pas signés** : Windows (SmartScreen) et macOS
 (Gatekeeper) affichent un avertissement au premier lancement, et certains
 antivirus peuvent les signaler à tort. Chaque fichier pèse 65 à 90 Mo. Le port
 4719 devient permanent, puisque les données sont rangées par origine.
+
+## Licence AGPL-3.0
+
+### Decision
+Le code est publié sous GNU AGPL v3.0 ou ultérieure, au nom d'EdouardLexx.
+
+### Reason
+Le dépôt est public et l'outil est présenté pour être installé : sans licence,
+personne n'avait légalement le droit de l'utiliser ni de le modifier. L'AGPL
+autorise tout cela, mais oblige toute version modifiée à rester libre, avec son
+code publié et la mention de l'auteur, y compris hébergée comme service en
+ligne. Pour un outil qui manipule des données financières, un code ouvert et
+vérifiable est aussi un argument de confiance.
+
+### Alternatives
+MIT : diffusion maximale, mais permet une reprise fermée et commerciale.
+PolyForm Noncommercial : interdit l'usage commercial, mais n'est pas une licence
+open source reconnue. Aucune licence : incompatible avec une invitation à
+installer l'outil.
+
+### Consequence
+Chaque dépendance doit rester compatible avec l'AGPL. La licence s'applique à
+partir de ce commit ; la v1.0.0, publiée avant, n'en portait aucune. Le
+titulaire étant seul auteur, il peut encore publier de futures versions sous
+d'autres conditions, mais ne peut pas retirer l'AGPL des versions déjà diffusées.
+

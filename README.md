@@ -369,3 +369,18 @@ produit des valeurs absurdes (25 jours de détention à +30 % donnerait +4000 %/
   Conserver les CSV d'origine permet de tout ré-importer.
 - Les animations Recharts sont désactivées : la version 2.15 ne rend pas les formes
   sous React 19 quand elles sont actives.
+
+## Licence
+
+Copyright © 2026 EdouardLexx — distribué sous licence
+[GNU AGPL v3.0 ou ultérieure](LICENSE).
+
+En clair : chacun peut utiliser, étudier, modifier et redistribuer ce logiciel,
+y compris ses versions modifiées, à condition qu'elles restent sous la même
+licence, avec leur code source publié et la mention de l'auteur d'origine. Cela
+vaut aussi pour une version proposée comme service en ligne. Le texte de
+[LICENSE](LICENSE) fait seul foi.
+
+Les données de marché viennent de Yahoo Finance et restent soumises à ses propres
+conditions ; la licence ne couvre que le code de ce dépôt.
+

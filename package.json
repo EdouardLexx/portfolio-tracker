@@ -2,6 +2,7 @@
   "name": "portfolio-tracker",
   "private": true,
   "version": "0.0.0",
+  "license": "AGPL-3.0-or-later",
   "type": "module",
   "scripts": {
     "dev": "concurrently \"node server.js\" \"vite\"",

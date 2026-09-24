@@ -41,3 +41,4 @@ Vider les données de navigation efface le portefeuille.
 
 Le code source est public et ces exécutables sont fabriqués automatiquement par
 GitHub Actions à partir de ce dépôt.
+Logiciel libre sous licence GNU AGPL v3.0 ou ultérieure.
