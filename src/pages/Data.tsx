@@ -10,6 +10,7 @@ import {
 } from '../utils/formatters'
 import { parseBackup, type Backup } from '../utils/backup'
 import type { DriveSync } from '../hooks/useDriveSync'
+import { FOLDER_NAME } from '../api/googleDrive'
 import { formatSyncTime, localToday } from '../utils/dates'
 
 interface DataPageProps {
@@ -397,9 +398,10 @@ function SyncCard({ drive }: { drive: DriveSync }) {
     >
       <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
         Retrouve le même portefeuille sur chaque appareil connecté au même compte
-        Google. L'application range un seul fichier dans un dossier caché de ton
-        Google Drive, réservé à elle : elle ne voit rien d'autre de ton Drive.
-        Ajouts, modifications et suppressions passent d'un appareil à l'autre.
+        Google. L'application range un seul fichier dans un dossier « {FOLDER_NAME} »
+        de ton Google Drive, et n'a accès qu'aux fichiers qu'elle a créés : rien
+        d'autre de ton Drive. Ajouts, modifications et suppressions passent d'un
+        appareil à l'autre.
       </p>
       <p className="text-sm text-gray-700 dark:text-gray-300 mb-4">{state[status]}</p>
 
@@ -432,7 +434,7 @@ function SyncCard({ drive }: { drive: DriveSync }) {
                     }}
                     className="px-4 py-2 text-sm rounded-lg border border-red-200 dark:border-red-900 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950"
                   >
-                    Désactiver et supprimer la copie Drive
+                    Désactiver et mettre la copie Drive à la corbeille
                   </button>
                 )}
                 <button

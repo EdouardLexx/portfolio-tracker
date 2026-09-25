@@ -523,8 +523,13 @@ git et exclus de l'exécutable (`scripts/embed-dist.mjs`).
 
 ### Decision
 Le portefeuille se synchronise entre appareils par un fichier JSON (le format de
-sauvegarde) rangé dans le dossier caché de l'application sur le Google Drive de
-l'utilisateur (`drive.appdata`). Le navigateur parle directement à Google, par
+sauvegarde) rangé dans un dossier visible « Portfolio Manager » du Google Drive
+de l'utilisateur (`drive.file` : l'appli n'accède qu'aux fichiers qu'elle a
+créés). Dossier visible plutôt que le dossier caché des applications
+(`drive.appdata`), choix de l'auteur : l'utilisateur voit où sont ses données et
+peut les télécharger ; en contrepartie, il peut déplacer ou supprimer le
+fichier (l'appli le retrouve s'il est déplacé, le recrée s'il est supprimé).
+Le navigateur parle directement à Google, par
 le flux OAuth « application côté navigateur » : une fenêtre de connexion
 Google, dont la réponse revient sur `public/oauth.html` et passe à l'appli par
 un `BroadcastChannel`. Aucun script Google n'est chargé. Le jeton, valable une

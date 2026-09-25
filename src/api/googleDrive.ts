@@ -7,9 +7,14 @@ import { ConflictError, type RemoteStore } from '../utils/sync'
  */
 export const GOOGLE_CLIENT_ID = ''
 
-/** The hidden per-app folder only: the app sees nothing else of the Drive. */
-const SCOPE = 'https://www.googleapis.com/auth/drive.appdata'
+/**
+ * Only the files this app created: the user's own files stay invisible to it,
+ * while the synced copy sits in a folder the user can see and download.
+ */
+const SCOPE = 'https://www.googleapis.com/auth/drive.file'
+export const FOLDER_NAME = 'Portfolio Manager'
 const FILE_NAME = 'portefeuille.json'
+const FOLDER_TYPE = 'application/vnd.google-apps.folder'
 const FILES = 'https://www.googleapis.com/drive/v3/files'
 const UPLOAD = 'https://www.googleapis.com/upload/drive/v3/files'
 /** Shared with public/oauth.html, which relays Google's answer. */
@@ -95,7 +100,7 @@ export function revoke(token: DriveToken): void {
   }).catch(() => {})
 }
 
-/** The synced copy: one JSON file in the app's hidden Drive folder. */
+/** The synced copy: one JSON file in a "Portfolio Manager" folder of the Drive. */
 export function driveStore(token: DriveToken): RemoteStore & { remove(): Promise<void> } {
   async function api(url: string, init: RequestInit = {}): Promise<Response> {
     let res: Response
@@ -112,17 +117,33 @@ export function driveStore(token: DriveToken): RemoteStore & { remove(): Promise
     return res
   }
 
-  async function find(): Promise<{ id: string; version: string } | null> {
+  // With drive.file, a search only ever returns what this app created: a file
+  // of the same name made by the user is never picked up, and the copy is
+  // still found if the user moved it out of the folder.
+  async function search(q: string): Promise<{ id: string; version: string }[]> {
     const query = new URLSearchParams({
-      spaces: 'appDataFolder',
-      q: `name = '${FILE_NAME}' and trashed = false`,
+      q: `${q} and trashed = false`,
       fields: 'files(id,version)',
+      orderBy: 'modifiedTime desc',
       pageSize: '1',
     })
-    const { files } = (await (await api(`${FILES}?${query}`)).json()) as {
+    return ((await (await api(`${FILES}?${query}`)).json()) as {
       files: { id: string; version: string }[]
-    }
-    return files[0] ?? null
+    }).files
+  }
+
+  const find = async () =>
+    (await search(`name = '${FILE_NAME}' and mimeType != '${FOLDER_TYPE}'`))[0] ?? null
+
+  async function folderId(): Promise<string> {
+    const [folder] = await search(`name = '${FOLDER_NAME}' and mimeType = '${FOLDER_TYPE}'`)
+    if (folder) return folder.id
+    const created = await api(FILES, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: FOLDER_NAME, mimeType: FOLDER_TYPE }),
+    })
+    return ((await created.json()) as { id: string }).id
   }
 
   return {
@@ -147,7 +168,7 @@ export function driveStore(token: DriveToken): RemoteStore & { remove(): Promise
         return
       }
       const boundary = `portefeuille-${crypto.randomUUID()}`
-      const metadata = JSON.stringify({ name: FILE_NAME, parents: ['appDataFolder'] })
+      const metadata = JSON.stringify({ name: FILE_NAME, parents: [await folderId()] })
       await api(`${UPLOAD}?uploadType=multipart`, {
         method: 'POST',
         headers: { 'Content-Type': `multipart/related; boundary=${boundary}` },
@@ -157,9 +178,16 @@ export function driveStore(token: DriveToken): RemoteStore & { remove(): Promise
       })
     },
 
+    // To the bin, not deleted: recoverable for 30 days. The folder stays, as
+    // the user may have put files of their own in it.
     async remove() {
       const file = await find()
-      if (file) await api(`${FILES}/${file.id}`, { method: 'DELETE' })
+      if (!file) return
+      await api(`${FILES}/${file.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ trashed: true }),
+      })
     },
   }
 }

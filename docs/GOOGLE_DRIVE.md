@@ -30,9 +30,11 @@ Une version modifiée (fork) doit utiliser son propre projet Google Cloud.
 3. **Audience** : **Externe**.
 4. **Coordonnées** : une adresse e-mail de contact → **Créer**.
 5. **Accès aux données** → **Ajouter ou supprimer des champs d'application** →
-   cocher `.../auth/drive.appdata` (« Afficher, créer et supprimer ses propres
-   données de configuration dans votre Google Drive ») → **Mettre à jour** →
-   **Enregistrer**.
+   cocher `.../auth/drive.file` (« Afficher, créer et supprimer uniquement les
+   fichiers Google Drive spécifiques que vous utilisez avec cette
+   application ») → **Mettre à jour** → **Enregistrer**. L'application crée un
+   dossier « Portfolio Manager » dans le Drive de l'utilisateur et ne voit que
+   ce qu'elle a créé.
 6. **Audience** → **Utilisateurs tests** → **Ajouter des utilisateurs** : son
    propre compte Google. Tant que l'application reste « En test », seuls ces
    comptes (100 au plus) peuvent se connecter, avec un avertissement « Google
@@ -68,7 +70,7 @@ Le premier couple sert à l'exécutable et à `npm start`, les deux suivants à
 ## 5. Ouvrir à d'autres utilisateurs
 
 Pour que n'importe qui puisse se connecter : **Audience** → **Publier
-l'application**. `drive.appdata` n'est pas un champ d'application « sensible »
+l'application**. `drive.file` n'est pas un champ d'application « sensible »
 au sens de Google, ce qui évite la procédure d'audit ; Google peut toutefois
 demander de valider la marque (nom, logo, page d'accueil, règles de
 confidentialité) avant de retirer l'avertissement.

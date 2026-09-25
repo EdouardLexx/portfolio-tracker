@@ -419,10 +419,12 @@ Trois pièces, du plus pur au plus concret :
   union (`mergeBackup`). `runSync(store, local, base)` lit la copie, fusionne,
   écrit si elle a bougé et recommence (3 fois au plus) sur `ConflictError`.
 - `src/api/googleDrive.ts` — `authorize` (fenêtre Google, `response_type=token`,
-  champ d'application `drive.appdata`, réponse relayée par `public/oauth.html`
+  champ d'application `drive.file`, réponse relayée par `public/oauth.html`
   sur le canal `portefeuille-oauth`, vérification du `state`), `driveStore`
-  (fichier `portefeuille.json` du dossier `appDataFolder`, version relue avant
-  chaque écriture), `revoke`. `GOOGLE_CLIENT_ID` vide : la synchro n'est pas
+  (fichier `portefeuille.json` dans un dossier visible « Portfolio Manager »,
+  créé au premier envoi ; retrouvé même déplacé, car `drive.file` ne montre
+  que ce que l'appli a créé ; version relue avant chaque écriture ; « supprimer
+  la copie » la met à la corbeille et laisse le dossier), `revoke`. `GOOGLE_CLIENT_ID` vide : la synchro n'est pas
   proposée.
 - `src/hooks/useDriveSync.ts` — appelé par `usePortfolio` avec les données et
   `applyData`. Jeton en mémoire ; statut `unavailable`, `off`, `signed-out`,

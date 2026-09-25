@@ -95,7 +95,8 @@ vos données en clair : gardez-le pour vous.
 **Synchronisation Google Drive**. Chaque appareil connecté au même compte
 Google retrouve le même portefeuille ; ajouts, modifications et suppressions
 passent de l'un à l'autre. L'application range un seul fichier dans un dossier
-caché de votre Drive, réservé à elle, et ne voit rien d'autre. Tant que la
+« Portfolio Manager » de votre Drive, et n'a accès qu'aux fichiers qu'elle a
+créés : rien d'autre de votre Drive. Tant que la
 synchronisation n'est pas activée, l'application ne contacte jamais Google. La
 connexion dure environ une heure, puis un clic sur « Drive : se connecter »
 (barre latérale) la renouvelle. Configuration côté Google (une fois, pour qui

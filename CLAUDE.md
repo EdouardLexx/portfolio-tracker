@@ -67,7 +67,7 @@ src/utils/           calculs purs : positions, TWR, projection, emprunts,
 src/hooks/           usePortfolio (orchestrateur), useTheme, useDiscreet,
                      useInstrument (fiche d'un titre)
 src/api/             client HTTP vers /api ; googleDrive.ts = connexion
-                     Google et fichier caché du Drive
+                     Google et dossier « Portfolio Manager » du Drive
 src/pages/           Wealth, Investments, Gold, Savings, Loans, Data
 src/components/      graphes et blocs réutilisables
 ```
@@ -168,7 +168,8 @@ affichés : vérifier avant de toucher.
 - Aucune ressource tierce dans l'interface (police web, CDN, script) : seuls
   les codes de titres partent vers Yahoo, via le serveur local. **Seule
   exception** : la synchronisation Drive, une fois activée par l'utilisateur,
-  parle directement à Google (connexion, fichier caché), sans script Google.
+  parle directement à Google (connexion, dossier « Portfolio Manager »), sans
+  script Google.
 - `type` importés avec `import type`.
 
 ## Important constraints
