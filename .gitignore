@@ -12,6 +12,8 @@ public/Transactions.csv
 *.xls
 *.ods
 *.json.bak
+# Sauvegardes exportées depuis l'onglet Données : tout le portefeuille en clair.
+portefeuille-sauvegarde*.json
 exports/
 data/
 .env*

@@ -8,6 +8,8 @@ import {
   formatQuantity,
   readableTextOn,
 } from '../utils/formatters'
+import { parseBackup, type Backup } from '../utils/backup'
+import { localToday } from '../utils/dates'
 
 interface DataPageProps {
   transactions: Transaction[]
@@ -17,6 +19,8 @@ interface DataPageProps {
   unresolvedIsins: string[]
   importFiles: (files: File[]) => Promise<ImportOutcome>
   removeTransactionsAt: (indices: number[]) => void
+  exportBackup: () => Backup
+  restoreBackup: (backup: Backup, mode: 'merge' | 'replace') => ImportOutcome
   resetData: () => void
 }
 
@@ -186,6 +190,158 @@ function SupportedData() {
   )
 }
 
+const plural = (n: number, word: string) => `${n} ${word}${n > 1 ? 's' : ''}`
+
+function OutcomeBanner({ outcome }: { outcome: ImportOutcome }) {
+  return (
+    <p
+      className={`mt-4 rounded-lg px-4 py-3 text-sm ${
+        outcome.ok
+          ? 'bg-emerald-50 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300'
+          : 'bg-red-50 dark:bg-red-950 text-red-700 dark:text-red-300'
+      }`}
+    >
+      {outcome.message}
+    </p>
+  )
+}
+
+/**
+ * The whole portfolio to a file and back: a safety copy, and the way to move
+ * it to another browser or device, since each one keeps its own data.
+ */
+function BackupCard({
+  exportBackup,
+  restoreBackup,
+}: {
+  exportBackup: () => Backup
+  restoreBackup: (backup: Backup, mode: 'merge' | 'replace') => ImportOutcome
+}) {
+  const fileRef = useRef<HTMLInputElement>(null)
+  const [pending, setPending] = useState<Backup | null>(null)
+  const [outcome, setOutcome] = useState<ImportOutcome | null>(null)
+
+  function download() {
+    const backup = exportBackup()
+    const url = URL.createObjectURL(
+      new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' })
+    )
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `portefeuille-sauvegarde-${localToday()}.json`
+    link.click()
+    // Revoked later: Firefox cancels a download whose URL goes away at once.
+    setTimeout(() => URL.revokeObjectURL(url), 10_000)
+    setPending(null)
+    setOutcome({
+      ok: true,
+      warnings: [],
+      message: `Sauvegarde exportée : ${plural(backup.data.transactions.length, 'ligne')} et ${plural(backup.data.loans.length, 'emprunt')}.`,
+    })
+  }
+
+  async function choose(list: FileList | null) {
+    const file = list?.[0]
+    if (fileRef.current) fileRef.current.value = ''
+    if (!file) return
+    const result = parseBackup(await file.text())
+    if ('error' in result) {
+      setPending(null)
+      setOutcome({ ok: false, warnings: [], message: result.error })
+      return
+    }
+    setPending(result.backup)
+    setOutcome(null)
+  }
+
+  function apply(mode: 'merge' | 'replace') {
+    if (!pending) return
+    setOutcome(restoreBackup(pending, mode))
+    setPending(null)
+  }
+
+  const exportedAt = pending?.exportedAt
+    ? new Date(pending.exportedAt).toLocaleString('fr-FR', {
+        dateStyle: 'long',
+        timeStyle: 'short',
+      })
+    : null
+
+  return (
+    <Card title="Sauvegarde">
+      <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+        Chaque navigateur garde ses propres données. Exporte tout (relevés,
+        saisies, emprunts) dans un fichier pour le mettre à l'abri ou le
+        transférer vers un autre navigateur, un autre ordinateur ou ton
+        téléphone. Le fichier contient tes données en clair : range-le en lieu
+        sûr et ne le partage pas.
+      </p>
+
+      <div className="flex flex-wrap gap-3">
+        <button
+          onClick={download}
+          className="px-4 py-2 text-sm rounded-lg bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-200"
+        >
+          Exporter une sauvegarde
+        </button>
+        <label className="px-4 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer">
+          Importer une sauvegarde
+          <input
+            ref={fileRef}
+            type="file"
+            accept=".json,application/json"
+            className="hidden"
+            onChange={(e) => choose(e.target.files)}
+          />
+        </label>
+      </div>
+
+      {pending && (
+        <div className="mt-4 rounded-lg border border-gray-200 dark:border-gray-700 p-4 text-sm">
+          <p className="text-gray-900 dark:text-gray-100 font-medium">
+            Sauvegarde{exportedAt ? ` du ${exportedAt}` : ''} :{' '}
+            {plural(pending.data.transactions.length, 'ligne')} et{' '}
+            {plural(pending.data.loans.length, 'emprunt')}.
+          </p>
+          <ul className="mt-2 space-y-1 text-gray-500 dark:text-gray-400">
+            <li>
+              <span className="font-medium text-gray-700 dark:text-gray-300">Fusionner</span>{' '}
+              ajoute ce qui manque ici, sans rien modifier ni effacer.
+            </li>
+            <li>
+              <span className="font-medium text-gray-700 dark:text-gray-300">Tout remplacer</span>{' '}
+              rend ce navigateur identique au fichier : ce qui n'y figure pas est
+              supprimé.
+            </li>
+          </ul>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button
+              onClick={() => apply('merge')}
+              className="px-3 py-1.5 rounded-lg bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-200"
+            >
+              Fusionner
+            </button>
+            <button
+              onClick={() => apply('replace')}
+              className="px-3 py-1.5 rounded-lg border border-red-200 dark:border-red-900 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950"
+            >
+              Tout remplacer
+            </button>
+            <button
+              onClick={() => setPending(null)}
+              className="px-3 py-1.5 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
+            >
+              Annuler
+            </button>
+          </div>
+        </div>
+      )}
+
+      {outcome && <OutcomeBanner outcome={outcome} />}
+    </Card>
+  )
+}
+
 export function DataPage({
   transactions,
   positions,
@@ -194,6 +350,8 @@ export function DataPage({
   unresolvedIsins,
   importFiles,
   removeTransactionsAt,
+  exportBackup,
+  restoreBackup,
   resetData,
 }: DataPageProps) {
   const fileRef = useRef<HTMLInputElement>(null)
@@ -377,6 +535,8 @@ export function DataPage({
           )}
         </div>
       </Card>
+
+      <BackupCard exportBackup={exportBackup} restoreBackup={restoreBackup} />
 
       {imports.length > 0 && (
         <Card title="Historique des imports">

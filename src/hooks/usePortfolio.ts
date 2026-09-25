@@ -65,6 +65,12 @@ import {
   loadLoans,
   saveLoans,
 } from '../utils/store'
+import {
+  createBackup,
+  mergeBackup,
+  type Backup,
+  type BackupData,
+} from '../utils/backup'
 
 export interface ImportOutcome {
   ok: boolean
@@ -637,6 +643,74 @@ export function usePortfolio(scope: Scope) {
     [allTransactions]
   )
 
+  /** Everything stored, as a file-ready backup. */
+  const exportBackup = useCallback(
+    (): Backup =>
+      createBackup({ transactions: allTransactions, imports, symbols, savings, loans }),
+    [allTransactions, imports, symbols, savings, loans]
+  )
+
+  /**
+   * Merge adds what this device lacks; replace mirrors the file exactly.
+   * Nothing is kept in memory unless every part was written to storage.
+   */
+  const restoreBackup = useCallback(
+    (backup: Backup, mode: 'merge' | 'replace'): ImportOutcome => {
+      const current: BackupData = {
+        transactions: allTransactions,
+        imports,
+        symbols,
+        savings,
+        loans,
+      }
+      const merge = mode === 'merge' ? mergeBackup(current, backup.data) : null
+      const next = merge ? merge.data : backup.data
+
+      let written =
+        saveTransactions(next.transactions) &&
+        saveImports(next.imports) &&
+        saveSymbols(next.symbols) &&
+        saveLoans(next.loans)
+      if (written && next.savings) written = saveSavings(next.savings)
+      else if (written) clearSavings()
+      if (!written) {
+        return {
+          ok: false,
+          warnings: [],
+          message:
+            "Impossible d'enregistrer les données (stockage du navigateur indisponible).",
+        }
+      }
+
+      setAllTransactions(next.transactions)
+      setImports(next.imports)
+      setSymbols(next.symbols)
+      setSavings(next.savings)
+      setLoans(next.loans)
+      setReady(true)
+
+      const s = (n: number) => (n > 1 ? 's' : '')
+      if (!merge) {
+        const n = next.transactions.length
+        const l = next.loans.length
+        return {
+          ok: true,
+          warnings: [],
+          message: `Sauvegarde restaurée : ${n} ligne${s(n)} et ${l} emprunt${s(l)}.`,
+        }
+      }
+      const { addedTransactions: a, knownTransactions: k, addedLoans: l } = merge
+      return {
+        ok: true,
+        added: a + l,
+        duplicates: k,
+        warnings: [],
+        message: `Fusion terminée : ${a} ligne${s(a)} ajoutée${s(a)}, ${k} déjà présente${s(k)}, ${l} emprunt${s(l)} ajouté${s(l)}.`,
+      }
+    },
+    [allTransactions, imports, symbols, savings, loans]
+  )
+
   const resetData = useCallback(() => {
     clearAllData()
     setImports([])
@@ -681,6 +755,8 @@ export function usePortfolio(scope: Scope) {
     removeTransactionsAt,
     meltValueEUR,
     goldSpotUSD,
+    exportBackup,
+    restoreBackup,
     resetData,
   }
 }

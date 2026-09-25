@@ -81,8 +81,15 @@ Les étapes 2 et 3 ne sont nécessaires qu'au premier lancement.
 Tout reste sur votre ordinateur, dans votre navigateur : aucun compte, aucun
 envoi de vos relevés. Seuls les codes des titres (ISIN, symboles) partent vers
 Yahoo Finance pour obtenir les cours. Deux conséquences : **vider les données de
-navigation efface le portefeuille**, et changer de navigateur par défaut repart
-d'un portefeuille vide.
+navigation efface le portefeuille**, et chaque navigateur (ou chaque adresse,
+comme `npm run dev` et l'exécutable) a le sien.
+
+**Sauvegarder et transférer** : onglet **Données** → **Sauvegarde**.
+« Exporter une sauvegarde » télécharge tout le portefeuille dans un fichier
+(`portefeuille-sauvegarde-AAAA-MM-JJ.json`) ; « Importer une sauvegarde » le
+recharge sur un autre navigateur ou appareil, soit en **fusionnant** (ajoute ce
+qui manque, sans rien effacer), soit en **remplaçant tout**. Le fichier contient
+vos données en clair : gardez-le pour vous.
 
 **Limite importante** : les ventes ne sont pas encore prises en compte. Si vous
 avez déjà vendu des titres, les chiffres affichés seront faux. Cet outil ne

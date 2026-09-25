@@ -490,3 +490,30 @@ multipliant les appels vers Yahoo au pire moment.
 ### Consequence
 Une panne durable coûte 500 ms de plus avant l'erreur, qui répond 502.
 
+## Sauvegarde par fichier, fusion qui n'efface rien
+
+### Decision
+Le portefeuille s'exporte et s'importe sous forme d'un fichier JSON versionné
+(`src/utils/backup.ts`). À l'import, deux choix explicites : **fusionner**
+(ajoute ce qui manque, ne modifie ni n'efface rien) ou **tout remplacer**
+(l'appareil devient identique au fichier). Le fichier est validé ligne par ligne
+avant tout changement.
+
+### Reason
+Chaque navigateur, et chaque adresse (`npm run dev`, exécutable), garde ses
+propres données : sans export, changer d'adresse ou d'appareil repartait de
+zéro, et un navigateur vidé perdait tout. C'est aussi la première brique de la
+synchronisation (étape 1 du plan : fichier ; 2 : Google Drive ; 3 : interface en
+ligne).
+
+### Alternatives
+Fusion « intelligente » propageant les suppressions : impossible sans historique
+des suppressions, prévu seulement avec la synchronisation Drive. Copie brute du
+`localStorage` : dépendante des noms de clés, sans validation ni version.
+
+### Consequence
+Une ligne supprimée sur un appareil revient si l'on fusionne une sauvegarde plus
+ancienne : pour recopier un appareil à l'identique, remplacer. Les fichiers
+`portefeuille-sauvegarde*.json` contiennent des données réelles : ignorés par
+git et exclus de l'exécutable (`scripts/embed-dist.mjs`).
+

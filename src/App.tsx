@@ -62,6 +62,8 @@ export default function App() {
     removeTransactionsAt,
     meltValueEUR,
     goldSpotUSD,
+    exportBackup,
+    restoreBackup,
     resetData,
   } = usePortfolio(scope)
 
@@ -148,6 +150,8 @@ export default function App() {
           unresolvedIsins={unresolvedIsins}
           importFiles={importFiles}
           removeTransactionsAt={removeTransactionsAt}
+          exportBackup={exportBackup}
+          restoreBackup={restoreBackup}
           resetData={resetData}
         />
       )

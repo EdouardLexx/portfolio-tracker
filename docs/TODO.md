@@ -35,12 +35,24 @@ CAGR conditionnel), `src/parsers/shared.ts` (fusion des jumeaux),
 `src/utils/projection.ts` (TRI sur cas connus).
 Contexte : le bug TWR corrigé récemment aurait été pris par un test.
 
-### Export / import des données
-*Fonctionnalité planifiée.*
-Les données vivent dans un seul navigateur, sans sauvegarde ni transfert. Un
-export JSON servirait des deux.
-Fichiers : `src/utils/store.ts`, `src/pages/Data.tsx`.
-Dépendance : prérequis de fait à tout usage sur un second appareil.
+### Synchronisation entre appareils — étapes 2 et 3
+*Fonctionnalité planifiée, plan validé par l'auteur.* L'étape 1 (fichier de
+sauvegarde, `src/utils/backup.ts`) est faite.
+
+**Étape 2 — Google Drive.** Connexion Google dans le navigateur, un seul fichier
+dans le dossier caché de l'application (`drive.appdata` : l'appli ne voit rien
+d'autre du Drive), chiffrement facultatif par mot de passe avant l'envoi, fusion
+avec `mergeBackup`. À prévoir : un projet Google Cloud gratuit (identifiant
+OAuth, origines autorisées), et le suivi des suppressions pour qu'une ligne
+effacée ne revienne pas d'un autre appareil. À trancher : la connexion ajoute
+un script Google dans l'interface, contraire à la règle « aucune ressource
+tierce » (`docs/DECISIONS.md`).
+
+**Étape 3 — interface en ligne pour le téléphone.** Front statique sur GitHub
+Pages (aucune donnée, que du code), et un relais des cours Yahoo (Yahoo refuse
+les appels directs d'un navigateur), par exemple Cloudflare Workers, limité à
+l'origine du site et à un débit raisonnable. À trancher : l'appli devient
+publiquement accessible (sans données).
 
 ### Gérer les ventes et les sorties
 *Fonctionnalité planifiée.*
@@ -139,8 +151,6 @@ Discutées, non engagées. Ne pas traiter comme des tâches.
   données non exposées, PC allumé requis), Vercel ou Netlify en gratuit
   (backend à découper en fonctions serverless), Render (réveil lent).
   Explicitement reporté : priorité à un fonctionnement local propre.
-- **Synchronisation entre appareils.** Impliquerait une base de données et une
-  authentification. Seule voie pour voir la même chose sur téléphone et PC.
 - **Classes d'actifs supplémentaires** — immobilier, assurance-vie, comptes
   courants. Déjà annoncées en pointillés sur la page Patrimoine
   (`src/pages/Wealth.tsx`, tableau `CLASSES`), aucune n'est implémentée.

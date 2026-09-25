@@ -23,7 +23,10 @@ Fonctionnalités réellement présentes :
 - emprunts (hors immobilier) : échéancier, capital restant dû, coût total,
   patrimoine net dans Patrimoine ;
 - fiche d'un titre à la Google Finance (courbe intraday à 10 ans, statistiques
-  du jour), ouverte depuis le tableau des positions ou le camembert.
+  du jour), ouverte depuis le tableau des positions ou le camembert ;
+- sauvegarde : export du portefeuille dans un fichier, import par fusion ou
+  remplacement (`src/utils/backup.ts`). Synchronisation Google Drive et
+  interface en ligne prévues (plan dans `docs/TODO.md`).
 
 Utilisateur visé : le propriétaire du portefeuille, seul. Aucune authentification,
 aucun multi-utilisateur.
@@ -183,6 +186,9 @@ affichés : vérifier avant de toucher.
 - `scripts/embed-dist.mjs` **exclut les fichiers de données** de `dist/` : sans
   cela, un build local embarquerait `public/Transactions.csv` dans un
   exécutable publié. Publier depuis la CI (tag `v*`), jamais depuis le poste.
+- **Le format de sauvegarde** (`BackupData`, `BACKUP_VERSION` dans
+  `src/utils/backup.ts`) : des fichiers existent chez les utilisateurs ; changer
+  sa forme impose d'incrémenter la version et de relire les anciennes.
 - **Les mentions de licences tierces** (`dist/THIRD_PARTY_LICENSES.txt`) sont
   exigées par les licences des dépendances pour toute redistribution. Changer
   la version de Bun dans la CI impose de mettre à jour

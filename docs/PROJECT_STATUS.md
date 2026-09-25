@@ -18,7 +18,8 @@ Limite structurante : **aucun test automatisé**, et aucune dépendance de test
 installée. Les vérifications se font à la main dans le navigateur.
 
 Deuxième limite : les données vivent dans le `localStorage` d'**un** navigateur.
-Pas de synchronisation, pas d'export.
+Pas de synchronisation automatique ; le transfert se fait par un fichier de
+sauvegarde (onglet Données).
 
 ## Completed
 
@@ -36,6 +37,8 @@ Vérifié dans le code.
 - Page Données : toutes les transactions groupées par compte, filtre texte,
   sélection multiple et suppression par position (`src/pages/Data.tsx`).
 - Historique des imports et réinitialisation.
+- Sauvegarde : export du portefeuille dans un fichier, import par fusion ou
+  remplacement, avec validation (`src/utils/backup.ts`, page Données).
 - Page Données : liste des données compatibles et de leurs limites, tenue à
   jour à la main dans `src/pages/Data.tsx` (`FILE_SOURCES`, `MANUAL_SOURCES`).
 
@@ -157,6 +160,10 @@ GitHub les accepte ; à monter de version à la prochaine alerte de la CI.
 
 Du plus récent au plus ancien.
 
+- **Sauvegarde et transfert** : carte « Sauvegarde » dans Données (exporter,
+  importer en fusionnant ou en remplaçant) ; fichiers de sauvegarde ignorés par
+  git et exclus de l'exécutable.
+
 - **Audit complet (septembre 2026)** :
   - positions : le nom affiché est enfin le plus récent ; la clé d'agrégation
     est une seule fonction (`positionKey`), ce qui corrige la répartition par
@@ -201,6 +208,7 @@ Ordre logique, sans engagement :
 2. Ajouter un harnais de test minimal sur les calculs financiers purs
    (`performance.ts`, `calculations.ts`, `projection.ts`, `shared.ts`), qui sont
    déjà écrits comme des fonctions pures.
-3. Export/import JSON des données, qui sert à la fois de sauvegarde et de
-   transfert entre navigateurs.
+3. Synchronisation entre appareils, en trois étapes décidées avec l'auteur :
+   fichier de sauvegarde (**fait**), synchronisation Google Drive, interface en
+   ligne sur GitHub Pages pour le téléphone (voir `docs/TODO.md`).
 4. Gérer les ventes et sorties, aujourd'hui ignorées.

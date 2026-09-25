@@ -305,7 +305,8 @@ Il prend un `scope` (`'all'` ou un compte) et expose notamment :
   `symbols`, `imports`, `accountsPresent`, `unresolvedIsins` ;
 - actions : `importFiles`, `addGoldEntry`, `addSavingsDeposit`,
   `addCashMovement`, `setSavingsBalance`, `removeTransaction`,
-  `removeTransactionsAt`, `resetData`, `reload`.
+  `removeTransactionsAt`, `exportBackup`, `restoreBackup`, `resetData`,
+  `reload`.
 
 **Amorçage** : l'état initial est lu une seule fois depuis le `localStorage`
 (`readStoredPortfolio`, initialiseurs paresseux de `useState`) ; l'effet de
@@ -406,5 +407,18 @@ devises et d'indices.
 
 - **Authentification** : aucune.
 - **Import** : décrit ci-dessus.
-- **Export** : **inexistant**. Il n'y a aucun moyen de sortir les données ni de
-  les transférer vers un autre navigateur.
+- **Sauvegarde** (`src/utils/backup.ts`, carte « Sauvegarde » de la page
+  Données) : un fichier JSON `{ app: 'portfolio-tracker', version, exportedAt,
+  data }`, où `data` = transactions, historique des imports, symboles résolus,
+  solde Livret A saisi et emprunts. Les préférences (thème, mode discret)
+  restent propres à chaque appareil.
+  - `createBackup` l'écrit ; `parseBackup` valide **chaque** ligne avant toute
+    restauration et refuse un fichier d'une version plus récente ;
+  - `mergeBackup` ajoute ce qui manque sans rien modifier : transactions par
+    `mergeTransactions` (jumeaux comptés), emprunts et imports par `id`,
+    symboles et solde saisi seulement s'ils manquent. Une suppression faite sur
+    un appareil n'est donc pas transmise par une fusion ;
+  - `usePortfolio.restoreBackup(backup, 'merge' | 'replace')` écrit tout dans
+    le stockage avant de mettre l'état à jour.
+  Changer la forme de `BackupData` impose d'incrémenter `BACKUP_VERSION` et de
+  savoir relire les versions précédentes.

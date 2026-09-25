@@ -6,9 +6,9 @@ import { extname, join, relative, sep } from 'node:path'
 const DIST = 'dist'
 const OUT = 'build/embedded-assets.js'
 
-// A local `vite build` copies public/ as is, real exports included: they must
-// never end up inside an executable that gets published.
-const DATA_FILE = /\.(csv|pdf|xlsx?|ods)$/i
+// A local `vite build` copies public/ as is, real exports and backups
+// included: they must never end up inside an executable that gets published.
+const DATA_FILE = /\.(csv|pdf|xlsx?|ods)$|portefeuille-sauvegarde[^/]*\.json$/i
 
 const TYPES = {
   '.html': 'text/html; charset=utf-8',
