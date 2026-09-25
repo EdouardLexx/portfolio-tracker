@@ -399,9 +399,42 @@ réutilisé par Patrimoine et Investissements via une prop `title`),
   pour les indices.
 - **Caisse des Dépôts** (données ouvertes) — taux du Livret A, indicatif.
 
-Rien d'autre : aucune police web, aucun script ni service tiers. Le navigateur
-ne parle qu'au serveur local, qui ne transmet que des codes de titres, de
-devises et d'indices.
+- **Google (facultatif)** — connexion OAuth et API Drive, appelées directement
+  par le navigateur, seulement si la synchronisation est activée.
+
+Rien d'autre : aucune police web, aucun script ni service tiers. Hors
+synchronisation, le navigateur ne parle qu'au serveur local, qui ne transmet que
+des codes de titres, de devises et d'indices.
+
+## Synchronisation Google Drive
+
+Trois pièces, du plus pur au plus concret :
+
+- `src/utils/sync.ts` — `mergeThreeWay(base, local, remote)` : transactions
+  comptées par identifiant (jumeaux compris) ; pour chaque identifiant, la
+  base plus le plus grand ajout moins la plus grande suppression des deux
+  côtés, si bien qu'un relevé importé sur deux appareils n'est pas doublé et
+  qu'une suppression se propage. Emprunts et imports par `id` : le côté qui a
+  modifié gagne, une modification l'emporte sur une suppression. Sans base,
+  union (`mergeBackup`). `runSync(store, local, base)` lit la copie, fusionne,
+  écrit si elle a bougé et recommence (3 fois au plus) sur `ConflictError`.
+- `src/api/googleDrive.ts` — `authorize` (fenêtre Google, `response_type=token`,
+  champ d'application `drive.appdata`, réponse relayée par `public/oauth.html`
+  sur le canal `portefeuille-oauth`, vérification du `state`), `driveStore`
+  (fichier `portefeuille.json` du dossier `appDataFolder`, version relue avant
+  chaque écriture), `revoke`. `GOOGLE_CLIENT_ID` vide : la synchro n'est pas
+  proposée.
+- `src/hooks/useDriveSync.ts` — appelé par `usePortfolio` avec les données et
+  `applyData`. Jeton en mémoire ; statut `unavailable`, `off`, `signed-out`,
+  `syncing`, `synced` ou `error` ; envoi automatique 3 s après la dernière
+  modification tant que le jeton est valide ; une modification faite pendant
+  un aller-retour est fusionnée par-dessus, puis envoyée au tour suivant.
+  Réglages dans `portfolio.sync.v1`, base dans `portfolio.syncBase.v1`.
+
+Interface : carte « Synchronisation Google Drive » de la page Données, et
+bouton d'état « Drive : … » dans la barre latérale (icône ☁ sur mobile), qui
+synchronise ou reconnecte en un clic. Configuration du client Google :
+`docs/GOOGLE_DRIVE.md`.
 
 ## Authentification, import/export
 

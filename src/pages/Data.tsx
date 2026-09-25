@@ -9,7 +9,8 @@ import {
   readableTextOn,
 } from '../utils/formatters'
 import { parseBackup, type Backup } from '../utils/backup'
-import { localToday } from '../utils/dates'
+import type { DriveSync } from '../hooks/useDriveSync'
+import { formatSyncTime, localToday } from '../utils/dates'
 
 interface DataPageProps {
   transactions: Transaction[]
@@ -21,6 +22,7 @@ interface DataPageProps {
   removeTransactionsAt: (indices: number[]) => void
   exportBackup: () => Backup
   restoreBackup: (backup: Backup, mode: 'merge' | 'replace') => ImportOutcome
+  drive: DriveSync
   resetData: () => void
 }
 
@@ -342,6 +344,126 @@ function BackupCard({
   )
 }
 
+/**
+ * Same portfolio on every device signed in to the same Google account: one
+ * file in the app's hidden Drive folder, merged with what changed here.
+ */
+function SyncCard({ drive }: { drive: DriveSync }) {
+  const [confirmOff, setConfirmOff] = useState(false)
+  const { status, message, lastSyncAt } = drive
+  const primary =
+    'px-4 py-2 text-sm rounded-lg bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-200 disabled:opacity-50'
+  const secondary =
+    'px-4 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
+
+  if (status === 'unavailable') {
+    return (
+      <Card title="Synchronisation Google Drive">
+        <p className="text-sm text-gray-500 dark:text-gray-400">
+          Pas encore disponible dans cette version : l'identifiant Google de
+          l'application n'est pas configuré. En attendant, utilise la
+          sauvegarde ci-dessous pour passer d'un appareil à l'autre.
+        </p>
+      </Card>
+    )
+  }
+
+  const state: Record<Exclude<typeof status, 'unavailable'>, string> = {
+    off: 'Désactivée.',
+    'signed-out': `Activée, en attente de connexion. Dernière synchro ${formatSyncTime(lastSyncAt)}.`,
+    syncing: 'Synchronisation en cours…',
+    synced: `À jour : dernière synchro ${formatSyncTime(lastSyncAt)}. Chaque modification est envoyée quelques secondes après.`,
+    error: `Dernière synchro réussie ${formatSyncTime(lastSyncAt)}.`,
+  }
+
+  return (
+    <Card
+      title="Synchronisation Google Drive"
+      aside={
+        status !== 'off' && (
+          <span
+            className={`text-xs px-2 py-0.5 rounded-full ${
+              status === 'synced'
+                ? 'bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300'
+                : status === 'error'
+                  ? 'bg-red-50 dark:bg-red-950 text-red-700 dark:text-red-300'
+                  : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
+            }`}
+          >
+            {status === 'synced' ? 'connectée' : status === 'error' ? 'erreur' : status === 'syncing' ? 'en cours' : 'déconnectée'}
+          </span>
+        )
+      }
+    >
+      <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
+        Retrouve le même portefeuille sur chaque appareil connecté au même compte
+        Google. L'application range un seul fichier dans un dossier caché de ton
+        Google Drive, réservé à elle : elle ne voit rien d'autre de ton Drive.
+        Ajouts, modifications et suppressions passent d'un appareil à l'autre.
+      </p>
+      <p className="text-sm text-gray-700 dark:text-gray-300 mb-4">{state[status]}</p>
+
+      <div className="flex flex-wrap items-center gap-3">
+        {status === 'off' ? (
+          <button onClick={drive.connect} className={primary}>
+            Activer avec Google Drive
+          </button>
+        ) : (
+          <>
+            <button onClick={drive.syncNow} disabled={status === 'syncing'} className={primary}>
+              {status === 'signed-out' ? 'Se connecter et synchroniser' : 'Synchroniser maintenant'}
+            </button>
+            {confirmOff ? (
+              <>
+                <button
+                  onClick={() => {
+                    drive.disconnect(false)
+                    setConfirmOff(false)
+                  }}
+                  className={secondary}
+                >
+                  Désactiver ici
+                </button>
+                {status === 'synced' && (
+                  <button
+                    onClick={() => {
+                      drive.disconnect(true)
+                      setConfirmOff(false)
+                    }}
+                    className="px-4 py-2 text-sm rounded-lg border border-red-200 dark:border-red-900 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950"
+                  >
+                    Désactiver et supprimer la copie Drive
+                  </button>
+                )}
+                <button
+                  onClick={() => setConfirmOff(false)}
+                  className="px-3 py-2 text-sm rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
+                >
+                  Annuler
+                </button>
+              </>
+            ) : (
+              <button onClick={() => setConfirmOff(true)} className={secondary}>
+                Désactiver
+              </button>
+            )}
+          </>
+        )}
+      </div>
+      {confirmOff && (
+        <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">
+          Désactiver garde tes données sur cet appareil et la copie sur Drive ;
+          les autres appareils continuent à se synchroniser entre eux.
+        </p>
+      )}
+
+      {message && (
+        <OutcomeBanner outcome={{ ok: false, warnings: [], message }} />
+      )}
+    </Card>
+  )
+}
+
 export function DataPage({
   transactions,
   positions,
@@ -352,6 +474,7 @@ export function DataPage({
   removeTransactionsAt,
   exportBackup,
   restoreBackup,
+  drive,
   resetData,
 }: DataPageProps) {
   const fileRef = useRef<HTMLInputElement>(null)
@@ -506,7 +629,9 @@ export function DataPage({
           {confirmReset ? (
             <>
               <span className="text-sm text-red-700 dark:text-red-300">
-                Effacer tout l'historique importé et repartir du fichier initial ?
+                {drive.status === 'off' || drive.status === 'unavailable'
+                  ? "Effacer tout l'historique importé et repartir du fichier initial ?"
+                  : 'Effacer ce navigateur ? La synchro Google Drive rechargera ensuite la copie : désactive-la d’abord pour repartir de zéro.'}
               </span>
               <button
                 onClick={() => {
@@ -535,6 +660,8 @@ export function DataPage({
           )}
         </div>
       </Card>
+
+      <SyncCard drive={drive} />
 
       <BackupCard exportBackup={exportBackup} restoreBackup={restoreBackup} />
 

@@ -37,22 +37,21 @@ Contexte : le bug TWR corrigé récemment aurait été pris par un test.
 
 ### Synchronisation entre appareils — étapes 2 et 3
 *Fonctionnalité planifiée, plan validé par l'auteur.* L'étape 1 (fichier de
-sauvegarde, `src/utils/backup.ts`) est faite.
+sauvegarde, `src/utils/backup.ts`) est faite. L'étape 2 est **codée et testée
+avec un faux Google** : il reste à créer le client Google Cloud
+(`docs/GOOGLE_DRIVE.md`), à inscrire son identifiant dans `GOOGLE_CLIENT_ID`,
+puis à essayer avec un vrai compte sur deux appareils.
 
-**Étape 2 — Google Drive.** Connexion Google dans le navigateur, un seul fichier
-dans le dossier caché de l'application (`drive.appdata` : l'appli ne voit rien
-d'autre du Drive), chiffrement facultatif par mot de passe avant l'envoi, fusion
-avec `mergeBackup`. À prévoir : un projet Google Cloud gratuit (identifiant
-OAuth, origines autorisées), et le suivi des suppressions pour qu'une ligne
-effacée ne revienne pas d'un autre appareil. À trancher : la connexion ajoute
-un script Google dans l'interface, contraire à la règle « aucune ressource
-tierce » (`docs/DECISIONS.md`).
+**Étape 2 — Google Drive.** Faite dans le code (voir `docs/ARCHITECTURE.md`,
+section Synchronisation). Décisions : appels à Google seulement une fois la
+synchro activée, sans script Google ; pas de chiffrement.
 
 **Étape 3 — interface en ligne pour le téléphone.** Front statique sur GitHub
 Pages (aucune donnée, que du code), et un relais des cours Yahoo (Yahoo refuse
 les appels directs d'un navigateur), par exemple Cloudflare Workers, limité à
-l'origine du site et à un débit raisonnable. À trancher : l'appli devient
-publiquement accessible (sans données).
+l'origine du site et à un débit raisonnable. Décidé : l'appli devient
+publiquement accessible, sans données. Penser à déclarer l'adresse GitHub
+Pages dans le client Google (origine et `oauth.html`).
 
 ### Gérer les ventes et les sorties
 *Fonctionnalité planifiée.*

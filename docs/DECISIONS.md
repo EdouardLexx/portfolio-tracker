@@ -468,7 +468,9 @@ purement esthétique.
 
 ### Consequence
 L'apparence suit la police du système (Segoe UI, San Francisco, Roboto…).
-Toute nouvelle ressource doit être servie par l'application elle-même.
+Toute nouvelle ressource doit être servie par l'application elle-même. Seule
+exception, décidée avec l'auteur : la synchronisation Google Drive, et
+seulement une fois activée (voir plus bas).
 
 ## Une seule nouvelle tentative sur coupure réseau
 
@@ -516,4 +518,44 @@ Une ligne supprimée sur un appareil revient si l'on fusionne une sauvegarde plu
 ancienne : pour recopier un appareil à l'identique, remplacer. Les fichiers
 `portefeuille-sauvegarde*.json` contiennent des données réelles : ignorés par
 git et exclus de l'exécutable (`scripts/embed-dist.mjs`).
+
+## Synchronisation par Google Drive, directement depuis le navigateur
+
+### Decision
+Le portefeuille se synchronise entre appareils par un fichier JSON (le format de
+sauvegarde) rangé dans le dossier caché de l'application sur le Google Drive de
+l'utilisateur (`drive.appdata`). Le navigateur parle directement à Google, par
+le flux OAuth « application côté navigateur » : une fenêtre de connexion
+Google, dont la réponse revient sur `public/oauth.html` et passe à l'appli par
+un `BroadcastChannel`. Aucun script Google n'est chargé. Le jeton, valable une
+heure, reste en mémoire. Chaque synchro fusionne à trois voies
+(`src/utils/sync.ts`) avec l'état de la dernière synchro (`syncBase`). Pas de
+chiffrement du fichier : choix de l'auteur.
+
+### Reason
+Voir le même portefeuille sur PC et téléphone sans serveur ni base de données à
+soi : les données restent chez l'utilisateur, dans son propre Drive. La fusion à
+trois voies transmet les suppressions, ce que la fusion simple de la sauvegarde
+ne peut pas faire, et combine les changements faits des deux côtés.
+
+### Alternatives
+- Bibliothèque Google Identity Services : un script tiers chargé à chaque
+  ouverture, pour le même résultat.
+- Flux avec jeton de rafraîchissement : exige un secret, donc un serveur.
+- Serveur et base de données à soi : hébergement, comptes, sécurité des
+  données financières à assumer.
+- Chiffrement par mot de passe : proposé, écarté par l'auteur (le fichier est
+  protégé par le compte Google et invisible hors de l'appli).
+
+### Consequence
+- L'utilisateur reclique toutes les heures environ pour se reconnecter (une
+  fenêtre s'ouvre et se referme seule). Aucune connexion n'est tentée sans clic,
+  car les navigateurs bloquent les fenêtres non demandées.
+- Drive n'a pas d'écriture conditionnelle : la version est relue juste avant
+  d'écrire, une course entre deux appareils reste possible dans cette fraction
+  de seconde ; un conflit détecté relance la synchro.
+- Réinitialiser un appareil efface sa base : la synchro suivante le re-remplit
+  depuis Drive au lieu de supprimer la copie.
+- Chaque adresse de l'appli doit être déclarée dans le client Google
+  (`docs/GOOGLE_DRIVE.md`).
 

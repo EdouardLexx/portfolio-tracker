@@ -39,6 +39,8 @@ Vérifié dans le code.
 - Historique des imports et réinitialisation.
 - Sauvegarde : export du portefeuille dans un fichier, import par fusion ou
   remplacement, avec validation (`src/utils/backup.ts`, page Données).
+- Synchronisation Google Drive (`src/utils/sync.ts`, `src/api/googleDrive.ts`,
+  `src/hooks/useDriveSync.ts`), en attente de l'identifiant Google.
 - Page Données : liste des données compatibles et de leurs limites, tenue à
   jour à la main dans `src/pages/Data.tsx` (`FILE_SOURCES`, `MANUAL_SOURCES`).
 
@@ -160,6 +162,10 @@ GitHub les accepte ; à monter de version à la prochaine alerte de la CI.
 
 Du plus récent au plus ancien.
 
+- **Synchronisation Google Drive** (étape 2) : fusion à trois voies, connexion
+  Google sans script, carte dans Données et état dans la barre latérale.
+  Testée de bout en bout avec un faux Google ; inactive tant que le client
+  Google n'est pas créé (`docs/GOOGLE_DRIVE.md`).
 - **Sauvegarde et transfert** : carte « Sauvegarde » dans Données (exporter,
   importer en fusionnant ou en remplaçant) ; fichiers de sauvegarde ignorés par
   git et exclus de l'exécutable.
@@ -209,6 +215,7 @@ Ordre logique, sans engagement :
    (`performance.ts`, `calculations.ts`, `projection.ts`, `shared.ts`), qui sont
    déjà écrits comme des fonctions pures.
 3. Synchronisation entre appareils, en trois étapes décidées avec l'auteur :
-   fichier de sauvegarde (**fait**), synchronisation Google Drive, interface en
-   ligne sur GitHub Pages pour le téléphone (voir `docs/TODO.md`).
+   fichier de sauvegarde (**fait**), synchronisation Google Drive (**codée**,
+   à configurer), interface en ligne sur GitHub Pages pour le téléphone (voir
+   `docs/TODO.md`).
 4. Gérer les ventes et sorties, aujourd'hui ignorées.

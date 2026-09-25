@@ -91,6 +91,16 @@ recharge sur un autre navigateur ou appareil, soit en **fusionnant** (ajoute ce
 qui manque, sans rien effacer), soit en **remplaçant tout**. Le fichier contient
 vos données en clair : gardez-le pour vous.
 
+**Synchroniser avec Google Drive** (facultatif) : onglet **Données** →
+**Synchronisation Google Drive**. Chaque appareil connecté au même compte
+Google retrouve le même portefeuille ; ajouts, modifications et suppressions
+passent de l'un à l'autre. L'application range un seul fichier dans un dossier
+caché de votre Drive, réservé à elle, et ne voit rien d'autre. Tant que la
+synchronisation n'est pas activée, l'application ne contacte jamais Google. La
+connexion dure environ une heure, puis un clic sur « Drive : se connecter »
+(barre latérale) la renouvelle. Configuration côté Google (une fois, pour qui
+compile l'application) : [`docs/GOOGLE_DRIVE.md`](docs/GOOGLE_DRIVE.md).
+
 **Limite importante** : les ventes ne sont pas encore prises en compte. Si vous
 avez déjà vendu des titres, les chiffres affichés seront faux. Cet outil ne
 constitue pas un conseil en investissement.

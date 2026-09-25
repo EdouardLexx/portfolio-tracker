@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Connexion Google</title>
+    <style>
+      body { margin: 0; min-height: 100vh; display: grid; place-items: center;
+             font-family: system-ui, sans-serif; background: #f9fafb; color: #111827; }
+      @media (prefers-color-scheme: dark) { body { background: #030712; color: #f3f4f6; } }
+    </style>
+  </head>
+  <body>
+    <p>Connexion terminée, cette fenêtre va se fermer.</p>
+    <script>
+      // Google sends the sign-in answer here (see src/api/googleDrive.ts).
+      // It is handed to the app over a same-origin channel, then wiped from
+      // the address bar and history, since it carries an access token.
+      const answer = location.hash.slice(1) || location.search.slice(1)
+      history.replaceState(null, '', location.pathname)
+      new BroadcastChannel('portefeuille-oauth').postMessage(answer)
+      setTimeout(() => window.close(), 400)
+    </script>
+  </body>
+</html>

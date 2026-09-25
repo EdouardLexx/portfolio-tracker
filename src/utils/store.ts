@@ -1,11 +1,14 @@
 import type { Transaction, ImportRecord, SymbolInfo, Loan } from '../types'
 import type { SavingsBalance } from '../parsers/savingsManual'
+import type { BackupData } from './backup'
 
 const KEY_TX = 'portfolio.transactions.v2'
 const KEY_IMPORTS = 'portfolio.imports.v2'
 const KEY_SYMBOLS = 'portfolio.symbols.v1'
 const KEY_SAVINGS = 'portfolio.savings.v1'
 const KEY_LOANS = 'portfolio.loans.v1'
+const KEY_SYNC = 'portfolio.sync.v1'
+const KEY_SYNC_BASE = 'portfolio.syncBase.v1'
 const LEGACY_KEYS = [
   'portfolio.transactions.v1',
   'portfolio.imports.v1',
@@ -82,6 +85,50 @@ export function loadLoans(): Loan[] {
 
 export function saveLoans(loans: Loan[]): boolean {
   return write(KEY_LOANS, loans)
+}
+
+export interface SyncSettings {
+  enabled: boolean
+  lastSyncAt: string | null
+}
+
+export function loadSyncSettings(): SyncSettings {
+  const stored = read<Partial<SyncSettings> | null>(KEY_SYNC, null)
+  return { enabled: stored?.enabled === true, lastSyncAt: stored?.lastSyncAt ?? null }
+}
+
+export function saveSyncSettings(settings: SyncSettings): boolean {
+  return write(KEY_SYNC, settings)
+}
+
+/**
+ * What this device and the Drive copy held when they last agreed: the
+ * reference that tells a deletion from a line the other side never had.
+ */
+export function loadSyncBase(): BackupData | null {
+  return read<BackupData | null>(KEY_SYNC_BASE, null)
+}
+
+export function saveSyncBase(base: BackupData): boolean {
+  return write(KEY_SYNC_BASE, base)
+}
+
+/** Without a base, the next sync keeps everything from both sides. */
+export function clearSyncBase() {
+  try {
+    localStorage.removeItem(KEY_SYNC_BASE)
+  } catch {
+    /* nothing we can do */
+  }
+}
+
+export function clearSync() {
+  clearSyncBase()
+  try {
+    localStorage.removeItem(KEY_SYNC)
+  } catch {
+    /* nothing we can do */
+  }
 }
 
 /** Drops the v1 keys once the v2 model is in place. */

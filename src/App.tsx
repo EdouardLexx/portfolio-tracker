@@ -9,6 +9,7 @@ import { DataPage } from './pages/Data'
 import { GoldPage } from './pages/Gold'
 import { SavingsPage } from './pages/Savings'
 import { LoansPage } from './pages/Loans'
+import { formatSyncTime } from './utils/dates'
 
 // AGPL §13: a modified version offered to users must point to its own source.
 const SOURCE_URL = 'https://github.com/EdouardLexx/portfolio-tracker'
@@ -64,6 +65,7 @@ export default function App() {
     goldSpotUSD,
     exportBackup,
     restoreBackup,
+    drive,
     resetData,
   } = usePortfolio(scope)
 
@@ -91,6 +93,17 @@ export default function App() {
       color: a.color,
     })),
   ]
+
+  // Only once sync is on: one click reconnects or syncs from any page.
+  const syncShown = drive.status !== 'off' && drive.status !== 'unavailable'
+  const syncLabel =
+    drive.status === 'syncing'
+      ? 'Drive : synchro…'
+      : drive.status === 'synced'
+        ? `Drive : à jour ${formatSyncTime(drive.lastSyncAt)}`
+        : drive.status === 'error'
+          ? 'Drive : erreur, réessayer'
+          : 'Drive : se connecter'
 
   function renderTab() {
     if (tab === 'wealth') {
@@ -152,6 +165,7 @@ export default function App() {
           removeTransactionsAt={removeTransactionsAt}
           exportBackup={exportBackup}
           restoreBackup={restoreBackup}
+          drive={drive}
           resetData={resetData}
         />
       )
@@ -263,10 +277,28 @@ export default function App() {
             {TABS.map((t) => navButton(t))}
           </nav>
 
+          {syncShown && (
+            <button
+              onClick={drive.syncNow}
+              disabled={drive.status === 'syncing'}
+              title="Synchroniser avec Google Drive"
+              className={`mt-auto flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-left transition-colors hover:bg-gray-50 dark:hover:bg-gray-800 ${
+                drive.status === 'error'
+                  ? 'text-red-600 dark:text-red-400'
+                  : drive.status === 'signed-out'
+                    ? 'text-amber-700 dark:text-amber-400'
+                    : 'text-gray-600 dark:text-gray-400'
+              }`}
+            >
+              <span className="w-4 text-center opacity-60">☁</span>
+              <span>{syncLabel}</span>
+            </button>
+          )}
+
           <button
             onClick={toggleDiscreet}
             aria-pressed={discreet}
-            className="mt-auto flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
+            className={`${syncShown ? '' : 'mt-auto '}flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100 transition-colors`}
           >
             <span className="w-4 text-center opacity-60">
               {discreet ? '◍' : '◌'}
@@ -290,10 +322,26 @@ export default function App() {
               the content. */}
           <nav className="md:hidden flex items-center gap-1 overflow-x-auto bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-4 py-2">
             {TABS.map((t) => navButton(t, true))}
+            {syncShown && (
+              <button
+                onClick={drive.syncNow}
+                disabled={drive.status === 'syncing'}
+                className={`ml-auto px-2 py-1.5 ${
+                  drive.status === 'error'
+                    ? 'text-red-600 dark:text-red-400'
+                    : drive.status === 'signed-out'
+                      ? 'text-amber-700 dark:text-amber-400'
+                      : 'text-gray-500 dark:text-gray-400'
+                }`}
+                title={syncLabel}
+              >
+                ☁
+              </button>
+            )}
             <button
               onClick={toggleDiscreet}
               aria-pressed={discreet}
-              className="ml-auto px-2 py-1.5 text-gray-500 dark:text-gray-400"
+              className={`${syncShown ? '' : 'ml-auto '}px-2 py-1.5 text-gray-500 dark:text-gray-400`}
               title={discreet ? 'Afficher les montants' : 'Mode discret'}
             >
               {discreet ? '◍' : '◌'}

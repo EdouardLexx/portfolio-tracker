@@ -64,7 +64,9 @@ import {
   clearSavings,
   loadLoans,
   saveLoans,
+  clearSyncBase,
 } from '../utils/store'
+import { useDriveSync } from './useDriveSync'
 import {
   createBackup,
   mergeBackup,
@@ -643,37 +645,45 @@ export function usePortfolio(scope: Scope) {
     [allTransactions]
   )
 
-  /** Everything stored, as a file-ready backup. */
-  const exportBackup = useCallback(
-    (): Backup =>
-      createBackup({ transactions: allTransactions, imports, symbols, savings, loans }),
+  const backupData: BackupData = useMemo(
+    () => ({ transactions: allTransactions, imports, symbols, savings, loans }),
     [allTransactions, imports, symbols, savings, loans]
   )
 
   /**
-   * Merge adds what this device lacks; replace mirrors the file exactly.
-   * Nothing is kept in memory unless every part was written to storage.
+   * Replaces the whole portfolio (restored file, Drive sync). Nothing is kept
+   * in memory unless every part was written to storage.
    */
+  const applyData = useCallback((next: BackupData): boolean => {
+    let written =
+      saveTransactions(next.transactions) &&
+      saveImports(next.imports) &&
+      saveSymbols(next.symbols) &&
+      saveLoans(next.loans)
+    if (written && next.savings) written = saveSavings(next.savings)
+    else if (written) clearSavings()
+    if (!written) return false
+
+    setAllTransactions(next.transactions)
+    setImports(next.imports)
+    setSymbols(next.symbols)
+    setSavings(next.savings)
+    setLoans(next.loans)
+    setReady(true)
+    return true
+  }, [])
+
+  const drive = useDriveSync(backupData, applyData)
+
+  /** Everything stored, as a file-ready backup. */
+  const exportBackup = useCallback((): Backup => createBackup(backupData), [backupData])
+
+  /** Merge adds what this device lacks; replace mirrors the file exactly. */
   const restoreBackup = useCallback(
     (backup: Backup, mode: 'merge' | 'replace'): ImportOutcome => {
-      const current: BackupData = {
-        transactions: allTransactions,
-        imports,
-        symbols,
-        savings,
-        loans,
-      }
-      const merge = mode === 'merge' ? mergeBackup(current, backup.data) : null
+      const merge = mode === 'merge' ? mergeBackup(backupData, backup.data) : null
       const next = merge ? merge.data : backup.data
-
-      let written =
-        saveTransactions(next.transactions) &&
-        saveImports(next.imports) &&
-        saveSymbols(next.symbols) &&
-        saveLoans(next.loans)
-      if (written && next.savings) written = saveSavings(next.savings)
-      else if (written) clearSavings()
-      if (!written) {
+      if (!applyData(next)) {
         return {
           ok: false,
           warnings: [],
@@ -681,13 +691,6 @@ export function usePortfolio(scope: Scope) {
             "Impossible d'enregistrer les données (stockage du navigateur indisponible).",
         }
       }
-
-      setAllTransactions(next.transactions)
-      setImports(next.imports)
-      setSymbols(next.symbols)
-      setSavings(next.savings)
-      setLoans(next.loans)
-      setReady(true)
 
       const s = (n: number) => (n > 1 ? 's' : '')
       if (!merge) {
@@ -708,10 +711,13 @@ export function usePortfolio(scope: Scope) {
         message: `Fusion terminée : ${a} ligne${s(a)} ajoutée${s(a)}, ${k} déjà présente${s(k)}, ${l} emprunt${s(l)} ajouté${s(l)}.`,
       }
     },
-    [allTransactions, imports, symbols, savings, loans]
+    [backupData, applyData]
   )
 
   const resetData = useCallback(() => {
+    // The Drive copy is not wiped with this device: without a base, the next
+    // sync brings it back in full instead of reading the reset as deletions.
+    clearSyncBase()
     clearAllData()
     setImports([])
     setSymbols({})
@@ -757,6 +763,7 @@ export function usePortfolio(scope: Scope) {
     goldSpotUSD,
     exportBackup,
     restoreBackup,
+    drive,
     resetData,
   }
 }

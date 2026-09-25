@@ -25,8 +25,11 @@ Fonctionnalités réellement présentes :
 - fiche d'un titre à la Google Finance (courbe intraday à 10 ans, statistiques
   du jour), ouverte depuis le tableau des positions ou le camembert ;
 - sauvegarde : export du portefeuille dans un fichier, import par fusion ou
-  remplacement (`src/utils/backup.ts`). Synchronisation Google Drive et
-  interface en ligne prévues (plan dans `docs/TODO.md`).
+  remplacement (`src/utils/backup.ts`) ;
+- synchronisation Google Drive facultative (`src/utils/sync.ts`,
+  `src/api/googleDrive.ts`, `src/hooks/useDriveSync.ts`) : codée et testée,
+  inactive tant que `GOOGLE_CLIENT_ID` est vide (`docs/GOOGLE_DRIVE.md`).
+  Interface en ligne pour le téléphone prévue (`docs/TODO.md`).
 
 Utilisateur visé : le propriétaire du portefeuille, seul. Aucune authentification,
 aucun multi-utilisateur.
@@ -63,7 +66,8 @@ src/utils/           calculs purs : positions, TWR, projection, emprunts,
                      stockage, formats, saisie des montants, dates locales
 src/hooks/           usePortfolio (orchestrateur), useTheme, useDiscreet,
                      useInstrument (fiche d'un titre)
-src/api/             client HTTP vers /api
+src/api/             client HTTP vers /api ; googleDrive.ts = connexion
+                     Google et fichier caché du Drive
 src/pages/           Wealth, Investments, Gold, Savings, Loans, Data
 src/components/      graphes et blocs réutilisables
 ```
@@ -99,8 +103,10 @@ pas chargé).
 4. **Les identifiants de transaction** se construisent avec `makeTransactionId`
    (`src/parsers/shared.ts`) pour hériter de la déduplication.
 5. `usePortfolio` est le seul orchestrateur : état, réseau, persistance.
-   Seule exception : les cours éphémères de la fiche d'un titre, chargés par
-   `useInstrument` et jetés à la fermeture — rien n'y touche le portefeuille.
+   Deux délégations : les cours éphémères de la fiche d'un titre
+   (`useInstrument`, rien n'y touche le portefeuille), et la synchronisation
+   Drive (`useDriveSync`, appelé par `usePortfolio`, qui ne modifie les données
+   que par son `applyData`).
 6. Le serveur ne fait que **proxy + cache** (et, dans l'exécutable, servir
    l'interface). Aucune logique métier côté serveur.
 
@@ -160,7 +166,9 @@ affichés : vérifier avant de toucher.
   `parseFloat` (« 1 200 » donnerait 1). Date du jour : `localToday()`, jamais
   `toISOString()` (la veille avant 2 h en France).
 - Aucune ressource tierce dans l'interface (police web, CDN, script) : seuls
-  les codes de titres partent vers Yahoo, via le serveur local.
+  les codes de titres partent vers Yahoo, via le serveur local. **Seule
+  exception** : la synchronisation Drive, une fois activée par l'utilisateur,
+  parle directement à Google (connexion, fichier caché), sans script Google.
 - `type` importés avec `import type`.
 
 ## Important constraints
@@ -186,6 +194,11 @@ affichés : vérifier avant de toucher.
 - `scripts/embed-dist.mjs` **exclut les fichiers de données** de `dist/` : sans
   cela, un build local embarquerait `public/Transactions.csv` dans un
   exécutable publié. Publier depuis la CI (tag `v*`), jamais depuis le poste.
+- **La synchro Drive** : clés `portfolio.sync.v1` et `portfolio.syncBase.v1`
+  (la base de la fusion à trois voies ; la perdre fait fusionner par union,
+  sans perte). Toute nouvelle adresse de l'appli (port, GitHub Pages) doit être
+  ajoutée aux origines et URI de redirection du client Google
+  (`docs/GOOGLE_DRIVE.md`), sinon la connexion échoue.
 - **Le format de sauvegarde** (`BackupData`, `BACKUP_VERSION` dans
   `src/utils/backup.ts`) : des fichiers existent chez les utilisateurs ; changer
   sa forme impose d'incrémenter la version et de relire les anciennes.
