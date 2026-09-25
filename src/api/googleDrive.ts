@@ -5,7 +5,8 @@ import { ConflictError, type RemoteStore } from '../utils/sync'
  * design (a browser app cannot keep a secret). Empty: sync is not offered. A
  * fork should put the id of its own project here.
  */
-export const GOOGLE_CLIENT_ID = ''
+export const GOOGLE_CLIENT_ID =
+  '1092908038784-obqc7r6g9ugtfvt9jhbafdiduodld7er.apps.googleusercontent.com'
 
 /**
  * Only the files this app created: the user's own files stay invisible to it,
