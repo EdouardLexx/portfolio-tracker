@@ -11,6 +11,7 @@ import {
 import { parseBackup, type Backup } from '../utils/backup'
 import type { DriveSync } from '../hooks/useDriveSync'
 import { FOLDER_NAME } from '../api/googleDrive'
+import { DriveIcon } from '../components/DriveIcon'
 import { formatSyncTime, localToday } from '../utils/dates'
 
 interface DataPageProps {
@@ -407,7 +408,8 @@ function SyncCard({ drive }: { drive: DriveSync }) {
 
       <div className="flex flex-wrap items-center gap-3">
         {status === 'off' ? (
-          <button onClick={drive.connect} className={primary}>
+          <button onClick={drive.connect} className={`${primary} inline-flex items-center gap-2`}>
+            <DriveIcon />
             Activer avec Google Drive
           </button>
         ) : (

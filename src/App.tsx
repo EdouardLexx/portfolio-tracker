@@ -10,6 +10,7 @@ import { GoldPage } from './pages/Gold'
 import { SavingsPage } from './pages/Savings'
 import { LoansPage } from './pages/Loans'
 import { formatSyncTime } from './utils/dates'
+import { DriveIcon } from './components/DriveIcon'
 
 // AGPL §13: a modified version offered to users must point to its own source.
 const SOURCE_URL = 'https://github.com/EdouardLexx/portfolio-tracker'
@@ -94,16 +95,24 @@ export default function App() {
     })),
   ]
 
-  // Only once sync is on: one click reconnects or syncs from any page.
-  const syncShown = drive.status !== 'off' && drive.status !== 'unavailable'
+  // Always at hand, top left: one click connects, reconnects or syncs.
+  const syncShown = drive.status !== 'unavailable'
   const syncLabel =
-    drive.status === 'syncing'
-      ? 'Drive : synchro…'
-      : drive.status === 'synced'
-        ? `Drive : à jour ${formatSyncTime(drive.lastSyncAt)}`
-        : drive.status === 'error'
-          ? 'Drive : erreur, réessayer'
-          : 'Drive : se connecter'
+    drive.status === 'off'
+      ? 'Connecter Google Drive'
+      : drive.status === 'syncing'
+        ? 'Synchronisation…'
+        : drive.status === 'synced'
+          ? `Synchronisé ${formatSyncTime(drive.lastSyncAt)}`
+          : drive.status === 'error'
+            ? 'Erreur de synchro, réessayer'
+            : 'Se reconnecter à Drive'
+  const syncTone =
+    drive.status === 'error'
+      ? 'text-red-600 dark:text-red-400'
+      : drive.status === 'signed-out'
+        ? 'text-amber-700 dark:text-amber-400'
+        : 'text-gray-600 dark:text-gray-400'
 
   function renderTab() {
     if (tab === 'wealth') {
@@ -271,34 +280,27 @@ export default function App() {
                 ? `EUR/USD ${rates.USD.toFixed(4)}`
                 : 'positions en euros'}
             </p>
+            {syncShown && (
+              <button
+                onClick={drive.syncNow}
+                disabled={drive.status === 'syncing'}
+                title="Synchroniser avec Google Drive"
+                className={`mt-3 -mx-1 w-[calc(100%+0.5rem)] flex items-center gap-2 px-2.5 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 text-xs text-left transition-colors hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-60 ${syncTone}`}
+              >
+                <DriveIcon className={`w-4 h-4 shrink-0 ${drive.status === 'syncing' ? 'animate-pulse' : ''}`} />
+                <span className="truncate">{syncLabel}</span>
+              </button>
+            )}
           </div>
 
           <nav className="flex flex-col gap-1">
             {TABS.map((t) => navButton(t))}
           </nav>
 
-          {syncShown && (
-            <button
-              onClick={drive.syncNow}
-              disabled={drive.status === 'syncing'}
-              title="Synchroniser avec Google Drive"
-              className={`mt-auto flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-left transition-colors hover:bg-gray-50 dark:hover:bg-gray-800 ${
-                drive.status === 'error'
-                  ? 'text-red-600 dark:text-red-400'
-                  : drive.status === 'signed-out'
-                    ? 'text-amber-700 dark:text-amber-400'
-                    : 'text-gray-600 dark:text-gray-400'
-              }`}
-            >
-              <span className="w-4 text-center opacity-60">☁</span>
-              <span>{syncLabel}</span>
-            </button>
-          )}
-
           <button
             onClick={toggleDiscreet}
             aria-pressed={discreet}
-            className={`${syncShown ? '' : 'mt-auto '}flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100 transition-colors`}
+            className={`mt-auto flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100 transition-colors`}
           >
             <span className="w-4 text-center opacity-60">
               {discreet ? '◍' : '◌'}
@@ -326,16 +328,11 @@ export default function App() {
               <button
                 onClick={drive.syncNow}
                 disabled={drive.status === 'syncing'}
-                className={`ml-auto px-2 py-1.5 ${
-                  drive.status === 'error'
-                    ? 'text-red-600 dark:text-red-400'
-                    : drive.status === 'signed-out'
-                      ? 'text-amber-700 dark:text-amber-400'
-                      : 'text-gray-500 dark:text-gray-400'
-                }`}
+                className={`ml-auto px-2 py-1.5 disabled:opacity-60 ${syncTone}`}
                 title={syncLabel}
+                aria-label={syncLabel}
               >
-                ☁
+                <DriveIcon className={`w-5 h-5 ${drive.status === 'syncing' ? 'animate-pulse' : ''}`} />
               </button>
             )}
             <button

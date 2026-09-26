@@ -434,8 +434,10 @@ Trois pièces, du plus pur au plus concret :
   Réglages dans `portfolio.sync.v1`, base dans `portfolio.syncBase.v1`.
 
 Interface : carte « Synchronisation Google Drive » de la page Données, et
-bouton d'état « Drive : … » dans la barre latérale (icône ☁ sur mobile), qui
-synchronise ou reconnecte en un clic. Configuration du client Google :
+bouton au logo Drive (`src/components/DriveIcon.tsx`, dessiné dans l'appli) en
+haut de la barre latérale, sous le nom de l'appli (dans la barre du haut sur
+mobile) : il connecte, reconnecte ou synchronise en un clic, et affiche l'heure
+de la dernière synchro. Configuration du client Google :
 `docs/GOOGLE_DRIVE.md`.
 
 ## Authentification, import/export
