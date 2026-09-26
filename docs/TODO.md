@@ -46,12 +46,12 @@ puis à essayer avec un vrai compte sur deux appareils.
 section Synchronisation). Décisions : appels à Google seulement une fois la
 synchro activée, sans script Google ; pas de chiffrement.
 
-**Étape 3 — interface en ligne pour le téléphone.** Front statique sur GitHub
-Pages (aucune donnée, que du code), et un relais des cours Yahoo (Yahoo refuse
-les appels directs d'un navigateur), par exemple Cloudflare Workers, limité à
-l'origine du site et à un débit raisonnable. Décidé : l'appli devient
-publiquement accessible, sans données. Penser à déclarer l'adresse GitHub
-Pages dans le client Google (origine et `oauth.html`).
+**Étape 3 — interface en ligne pour le téléphone.** Codée et testée en local
+(interface sous `/portfolio-tracker/`, relais sur une autre origine). Reste, côté
+comptes : projet Vercel importé depuis le dépôt, variable `RELAY_URL`, GitHub
+Pages activé (source « GitHub Actions »), adresse Pages ajoutée au client
+Google, puis publication de l'appli Google (Branding, domaine vérifié). Détails :
+`docs/GOOGLE_DRIVE.md`, `docs/ARCHITECTURE.md` (Version en ligne).
 
 ### Gérer les ventes et les sorties
 *Fonctionnalité planifiée.*

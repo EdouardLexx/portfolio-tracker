@@ -7,14 +7,20 @@ import type {
   InstrumentInfo,
 } from '../types'
 
-const BASE = '/api'
+/**
+ * The local server by default. The online version (GitHub Pages) has no
+ * server of its own: its build points this at the quotes relay.
+ */
+const BASE: string = import.meta.env.VITE_API_BASE ?? '/api'
+const ONLINE = BASE !== '/api'
 
-const SERVER_DOWN =
-  "Serveur local injoignable : l'application a été fermée ou arrêtée. Relance-la, puis recharge la page."
+const SERVER_DOWN = ONLINE
+  ? 'Relais des cours injoignable : vérifie ta connexion internet, puis recharge la page.'
+  : "Serveur local injoignable : l'application a été fermée ou arrêtée. Relance-la, puis recharge la page."
 
 /**
- * GET on the local API. A rejected fetch (not an HTTP error) means the local
- * server itself is gone, which the browser reports in English and in jargon
+ * GET on the API. A rejected fetch (not an HTTP error) means the server
+ * itself is gone, which the browser reports in English and in jargon
  * ("NetworkError when attempting to fetch resource", "Failed to fetch").
  */
 async function getJson<T>(path: string, params: Record<string, string>, failure: string): Promise<T> {

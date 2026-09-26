@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Portefeuille — confidentialité</title>
+    <style>
+      body { margin: 0 auto; max-width: 42rem; padding: 2rem 1rem 4rem; line-height: 1.6;
+             font-family: system-ui, sans-serif; background: #f9fafb; color: #111827; }
+      a { color: #2563eb; }
+      @media (prefers-color-scheme: dark) {
+        body { background: #030712; color: #f3f4f6; }
+        a { color: #60a5fa; }
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Règles de confidentialité</h1>
+    <p>
+      Portefeuille est un logiciel libre de suivi de patrimoine
+      (<a href="https://github.com/EdouardLexx/portfolio-tracker">code source</a>).
+      Il n'a ni compte utilisateur, ni base de données, ni serveur qui stocke
+      vos informations.
+    </p>
+
+    <h2>Où sont vos données</h2>
+    <p>
+      Vos relevés, saisies et emprunts sont enregistrés uniquement dans votre
+      navigateur, sur votre appareil. Personne d'autre, y compris l'auteur du
+      logiciel, n'y a accès. Vider les données de navigation les efface.
+    </p>
+
+    <h2>Cours de bourse</h2>
+    <p>
+      Pour afficher les cours, l'application envoie les codes des titres
+      (par exemple « AAPL » ou un ISIN) à un relais qui interroge Yahoo Finance.
+      Le relais ne reçoit ni montant, ni quantité, ni portefeuille, et ne
+      conserve rien ; son hébergeur (Vercel) peut, comme tout serveur web,
+      journaliser l'adresse IP et l'heure des requêtes.
+    </p>
+
+    <h2>Synchronisation Google Drive (facultative)</h2>
+    <p>
+      Si vous l'activez, l'application se connecte à votre compte Google avec
+      l'autorisation « fichiers créés par cette application » : elle crée un
+      dossier « Portfolio Manager » dans votre Google Drive et y enregistre une
+      copie de votre portefeuille. Elle n'a accès à aucun autre fichier de
+      votre Drive. Cette copie reste dans votre Drive ; elle n'est transmise à
+      personne d'autre. L'autorisation dure une heure et n'est conservée que
+      dans l'onglet ouvert. Vous pouvez la retirer à tout moment depuis
+      l'application (« Désactiver ») ou depuis
+      <a href="https://myaccount.google.com/permissions">votre compte Google</a>.
+    </p>
+    <p>
+      L'utilisation des informations reçues des API Google respecte les
+      <a href="https://developers.google.com/terms/api-services-user-data-policy">règles
+      relatives aux données utilisateur des services d'API Google</a>, y compris
+      les exigences d'utilisation limitée.
+    </p>
+
+    <h2>Contact</h2>
+    <p>
+      Questions et signalements :
+      <a href="https://github.com/EdouardLexx/portfolio-tracker/issues">page des
+      tickets du projet</a>.
+    </p>
+  </body>
+</html>

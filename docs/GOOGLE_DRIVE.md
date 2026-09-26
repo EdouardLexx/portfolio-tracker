@@ -51,6 +51,7 @@ Une version modifiée (fork) doit utiliser son propre projet Google Cloud.
 http://127.0.0.1:4719
 http://localhost:5173
 http://127.0.0.1:5173
+https://edouardlexx.github.io
 ```
 
 **URI de redirection autorisés** :
@@ -59,10 +60,11 @@ http://127.0.0.1:5173
 http://127.0.0.1:4719/oauth.html
 http://localhost:5173/oauth.html
 http://127.0.0.1:5173/oauth.html
+https://edouardlexx.github.io/portfolio-tracker/oauth.html
 ```
 
 Le premier couple sert à l'exécutable et à `npm start`, les deux suivants à
-`npm run dev`. L'interface en ligne (étape 3) ajoutera son adresse GitHub Pages.
+`npm run dev`, le dernier à la version en ligne (GitHub Pages).
 
 **Créer** → copier l'**ID client** (il se termine par
 `.apps.googleusercontent.com`) et l'inscrire dans `GOOGLE_CLIENT_ID`.
@@ -70,7 +72,12 @@ Le premier couple sert à l'exécutable et à `npm start`, les deux suivants à
 ## 5. Ouvrir à d'autres utilisateurs
 
 Pour que n'importe qui puisse se connecter : **Audience** → **Publier
-l'application**. `drive.file` n'est pas un champ d'application « sensible »
+l'application**. Google demande d'abord, dans **Branding** : page d'accueil
+`https://edouardlexx.github.io/portfolio-tracker/`, règles de confidentialité
+`https://edouardlexx.github.io/portfolio-tracker/confidentialite.html`, et le
+domaine autorisé `edouardlexx.github.io`, dont il faut prouver la propriété dans
+Google Search Console (méthode « fichier HTML » : déposer le fichier fourni dans
+`public/`). `drive.file` n'est pas un champ d'application « sensible »
 au sens de Google, ce qui évite la procédure d'audit ; Google peut toutefois
 demander de valider la marque (nom, logo, page d'accueil, règles de
 confidentialité) avant de retirer l'avertissement.

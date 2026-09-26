@@ -289,7 +289,8 @@ passer par le front (Vite), qui relaie lui-même vers `127.0.0.1`.
 ### Consequence
 Appeler l'API depuis une autre machine ou une autre origine ne fonctionne plus,
 volontairement. Le proxy Vite cible `127.0.0.1` et non `localhost`, qui peut se
-résoudre en IPv6.
+résoudre en IPv6. Le relais en ligne (`api/index.js`, sur Vercel) est l'unique
+exception : il autorise la seule origine de l'interface en ligne (voir plus bas).
 
 ## Mode discret : masquer la taille, pas la performance
 
@@ -563,4 +564,42 @@ ne peut pas faire, et combine les changements faits des deux côtés.
   depuis Drive au lieu de supprimer la copie.
 - Chaque adresse de l'appli doit être déclarée dans le client Google
   (`docs/GOOGLE_DRIVE.md`).
+
+## Version en ligne : interface sur GitHub Pages, relais des cours sur Vercel
+
+### Decision
+L'interface est publiée sur GitHub Pages
+(`https://edouardlexx.github.io/portfolio-tracker/`) par
+`.github/workflows/pages.yml` à chaque push sur `main`. Les cours passent par un
+relais sur Vercel, qui exécute tel quel `server/api.js` derrière `api/index.js`.
+Le relais n'accepte que l'origine de l'interface (`ALLOWED_ORIGINS`, par défaut
+`https://edouardlexx.github.io`) : une autre origine reçoit 403 avant tout appel
+à Yahoo. L'adresse du relais est la variable de dépôt `RELAY_URL`, lue au build
+(`VITE_API_BASE`).
+
+### Reason
+Ouvrir l'appli sur un téléphone sans rien installer. GitHub Pages ne sert que
+des fichiers et Yahoo refuse les appels directs d'un navigateur : il faut un
+relais. Vercel, choisi par l'auteur, fait tourner le serveur existant sans
+réécriture, avec un compte GitHub.
+
+### Alternatives
+- Cloudflare Workers : plus rapide, mais relais à réécrire sans
+  `yahoo-finance2`.
+- Tout sur Vercel : une seule adresse, mais hors github.io.
+- Render : mise en veille, réveil de près d'une minute.
+
+### Consequence
+- La version en ligne ne contient aucune donnée : chaque visiteur a son
+  portefeuille dans son navigateur (origine `edouardlexx.github.io`, partagée
+  avec les autres sites Pages du même compte ; les clés `portfolio.*` évitent
+  les collisions), et sa copie Drive s'il synchronise.
+- Le relais est public : un programme hors navigateur peut l'appeler en
+  imitant l'origine. Il ne renvoie que des cours publics ; le risque est un
+  quota Yahoo épuisé, pas une fuite.
+- Chemins relatifs à `import.meta.env.BASE_URL` (fichiers de `public/`), jamais
+  absolus.
+- L'adresse Pages doit figurer dans le client Google (origine et `oauth.html`),
+  et la page `public/confidentialite.html` sert de règles de confidentialité à
+  l'écran de consentement Google.
 

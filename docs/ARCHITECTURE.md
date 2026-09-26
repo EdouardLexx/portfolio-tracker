@@ -293,6 +293,21 @@ exécutables sur Linux, lance ceux de Windows, macOS arm64 et Linux sur leur
 système (réponse de `/api/health` et de la page), puis publie la release avec
 `.github/release-notes.md`. Le binaire macOS Intel n'est pas testé en CI.
 
+## Version en ligne
+
+- **Interface** : `.github/workflows/pages.yml` construit avec
+  `--base=/portfolio-tracker/` et `VITE_API_BASE=<RELAY_URL>/api`, refuse tout
+  fichier de données dans `dist/`, puis publie sur GitHub Pages. Le job est
+  ignoré tant que la variable de dépôt `RELAY_URL` n'existe pas.
+- **Relais des cours** : `vercel.json` (aucun build, page d'accueil statique
+  `vercel/index.html`, toutes les routes `/api/*` vers la fonction) et
+  `api/index.js`, qui monte `server/api.js` derrière un filtre d'origine
+  (`ALLOWED_ORIGINS`) posant `Access-Control-Allow-Origin`.
+- `src/api/stockApi.ts` lit `VITE_API_BASE` (`/api` par défaut) ; son message
+  d'erreur réseau parle du relais en ligne, du serveur local sinon.
+- Fichiers de `public/` adressés par `import.meta.env.BASE_URL` : `oauth.html`,
+  `confidentialite.html`, `THIRD_PARTY_LICENSES.txt`, `Transactions.csv`.
+
 ## Gestion de l'état — `src/hooks/usePortfolio.ts`
 
 Hook unique (~690 lignes) qui centralise état, réseau et persistance.

@@ -56,6 +56,8 @@ Licence : **AGPL-3.0-or-later**, titulaire EdouardLexx (`LICENSE`).
 server.js            entrée de développement : l'API sur :3001
 server/api.js        routes Express (proxy Yahoo + taux Livret A)
 server/standalone.js entrée de l'exécutable : API + interface sur :4719
+api/index.js         relais des cours en ligne (Vercel) : server/api.js
+                     derrière un filtre d'origine ; vercel.json, vercel/
 scripts/             licences tierces, embarquement de dist/, compilation
                      des exécutables ; licenses/bun.md = licence de Bun
 .github/workflows/   fabrication, test et publication des exécutables
@@ -195,6 +197,11 @@ affichés : vérifier avant de toucher.
 - `scripts/embed-dist.mjs` **exclut les fichiers de données** de `dist/` : sans
   cela, un build local embarquerait `public/Transactions.csv` dans un
   exécutable publié. Publier depuis la CI (tag `v*`), jamais depuis le poste.
+- **La version en ligne** : interface sur GitHub Pages sous
+  `/portfolio-tracker/`, relais sur Vercel (variable de dépôt `RELAY_URL`).
+  Tout fichier de `public/` s'adresse par `import.meta.env.BASE_URL`, jamais par
+  un chemin absolu. Le relais n'autorise que l'origine de l'interface
+  (`ALLOWED_ORIGINS` dans `api/index.js`).
 - **La synchro Drive** : clés `portfolio.sync.v1` et `portfolio.syncBase.v1`
   (la base de la fusion à trois voies ; la perdre fait fusionner par union,
   sans perte). Toute nouvelle adresse de l'appli (port, GitHub Pages) doit être

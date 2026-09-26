@@ -1,0 +1,59 @@
+# Publishes the interface on GitHub Pages at every push on main. It holds no
+# data, only the app: each visitor's portfolio stays in their own browser (and
+# their own Google Drive if they sync). Quotes go through the Vercel relay,
+# whose address is the repository variable RELAY_URL (Settings → Secrets and
+# variables → Actions → Variables); the job is skipped until it is set.
+name: Interface en ligne
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    if: vars.RELAY_URL != ''
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx tsc -b
+      - name: Construire pour https://edouardlexx.github.io/portfolio-tracker/
+        run: npx vite build --base=/portfolio-tracker/
+        env:
+          VITE_API_BASE: ${{ vars.RELAY_URL }}/api
+      - run: node scripts/third-party-licenses.mjs
+      # Nothing like an export or a backup may ever be published.
+      - name: Aucun fichier de données dans le site
+        run: |
+          if find dist -type f | grep -iE '\.(csv|pdf|xlsx?|ods)$|portefeuille-sauvegarde'; then
+            echo "Fichier de données dans dist/ : publication refusée." >&2
+            exit 1
+          fi
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

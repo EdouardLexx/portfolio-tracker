@@ -104,7 +104,7 @@ function readStoredPortfolio() {
  */
 async function readBundledCsv(): Promise<Transaction[]> {
   try {
-    const res = await fetch('/Transactions.csv')
+    const res = await fetch(`${import.meta.env.BASE_URL}Transactions.csv`)
     // Without the file, Vite's SPA fallback answers 200 with index.html.
     if (!res.ok || res.headers.get('content-type')?.includes('text/html')) return []
     const { transactions } = parseDegiroCsv(await res.text(), 'Transactions.csv')

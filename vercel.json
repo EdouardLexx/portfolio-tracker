@@ -1,0 +1,7 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "buildCommand": "echo 'Relais des cours seulement : l’interface est publiée sur GitHub Pages.'",
+  "outputDirectory": "vercel",
+  "rewrites": [{ "source": "/api/(.*)", "destination": "/api" }]
+}

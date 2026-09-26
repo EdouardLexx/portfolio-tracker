@@ -398,11 +398,18 @@ export default function App() {
                 Code source (AGPL-3.0)
               </a>
               <a
-                href="/THIRD_PARTY_LICENSES.txt"
+                href={`${import.meta.env.BASE_URL}THIRD_PARTY_LICENSES.txt`}
                 target="_blank"
                 className="underline hover:text-gray-600 dark:hover:text-gray-300"
               >
                 Licences des composants
+              </a>
+              <a
+                href={`${import.meta.env.BASE_URL}confidentialite.html`}
+                target="_blank"
+                className="underline hover:text-gray-600 dark:hover:text-gray-300"
+              >
+                Confidentialité
               </a>
             </footer>
           </div>
