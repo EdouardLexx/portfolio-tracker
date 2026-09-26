@@ -40,7 +40,9 @@ Vérifié dans le code.
 - Sauvegarde : export du portefeuille dans un fichier, import par fusion ou
   remplacement, avec validation (`src/utils/backup.ts`, page Données).
 - Synchronisation Google Drive (`src/utils/sync.ts`, `src/api/googleDrive.ts`,
-  `src/hooks/useDriveSync.ts`), en attente de l'identifiant Google.
+  `src/hooks/useDriveSync.ts`) : un appareil vide se remplit depuis Drive à
+  la connexion ; après chaque modification, une fenêtre propose d'envoyer
+  (`src/components/SyncPrompt.tsx`).
 - Page Données : liste des données compatibles et de leurs limites, tenue à
   jour à la main dans `src/pages/Data.tsx` (`FILE_SOURCES`, `MANUAL_SOURCES`).
 
@@ -162,6 +164,12 @@ GitHub les accepte ; à monter de version à la prochaine alerte de la CI.
 
 Du plus récent au plus ancien.
 
+- **Synchro Drive plus naturelle** : plus d'envoi automatique ; une fenêtre en
+  bas à droite propose de récupérer (appareil vide), d'envoyer (après une
+  modification) ou de mettre à jour (page ouverte sans connexion Google). Un
+  appareil vide prend la copie Drive telle quelle, sans jamais l'effacer. La
+  connexion Google survit au rechargement de l'onglet, et la page se met alors
+  à jour seule.
 - **Version en ligne** (étape 3) : interface sur GitHub Pages
   (`https://edouardlexx.github.io/portfolio-tracker/`), relais des cours sur
   Vercel, synchro Drive disponible pour les utilisateurs tests de l'appli

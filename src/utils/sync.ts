@@ -33,6 +33,10 @@ export function canonical(data: BackupData): string {
 
 export const sameData = (a: BackupData, b: BackupData) => canonical(a) === canonical(b)
 
+/** Nothing the user entered: a new device, or one just reset. */
+export const isEmptyData = (data: BackupData) =>
+  !data.transactions.length && !data.imports.length && !data.loans.length && !data.savings
+
 function countById(list: Transaction[]) {
   const map = new Map<string, Transaction[]>()
   for (const tx of list) map.set(tx.id, [...(map.get(tx.id) ?? []), tx])

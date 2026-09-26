@@ -27,9 +27,10 @@ Fonctionnalités réellement présentes :
 - sauvegarde : export du portefeuille dans un fichier, import par fusion ou
   remplacement (`src/utils/backup.ts`) ;
 - synchronisation Google Drive facultative (`src/utils/sync.ts`,
-  `src/api/googleDrive.ts`, `src/hooks/useDriveSync.ts`) : codée et testée,
-  inactive tant que `GOOGLE_CLIENT_ID` est vide (`docs/GOOGLE_DRIVE.md`).
-  Interface en ligne pour le téléphone prévue (`docs/TODO.md`).
+  `src/api/googleDrive.ts`, `src/hooks/useDriveSync.ts`) : un appareil vide
+  se remplit depuis Drive, et après chaque modification une fenêtre propose
+  de synchroniser (`src/components/SyncPrompt.tsx`) ; rien ne part sans clic ;
+- version en ligne pour le téléphone : GitHub Pages et relais Vercel.
 
 Utilisateur visé : le propriétaire du portefeuille, seul. Aucune authentification,
 aucun multi-utilisateur.
@@ -204,7 +205,8 @@ affichés : vérifier avant de toucher.
   (`ALLOWED_ORIGINS` dans `api/index.js`).
 - **La synchro Drive** : clés `portfolio.sync.v1` et `portfolio.syncBase.v1`
   (la base de la fusion à trois voies ; la perdre fait fusionner par union,
-  sans perte). Toute nouvelle adresse de l'appli (port, GitHub Pages) doit être
+  sans perte). Un appareil vide synchronise **sans base** : sinon son vide
+  effacerait la copie Drive. Toute nouvelle adresse de l'appli (port, GitHub Pages) doit être
   ajoutée aux origines et URI de redirection du client Google
   (`docs/GOOGLE_DRIVE.md`), sinon la connexion échoue.
 - **Le format de sauvegarde** (`BackupData`, `BACKUP_VERSION` dans

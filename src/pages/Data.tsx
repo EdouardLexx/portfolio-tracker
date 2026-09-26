@@ -374,7 +374,9 @@ function SyncCard({ drive }: { drive: DriveSync }) {
     off: 'Désactivée.',
     'signed-out': `Activée, en attente de connexion. Dernière synchro ${formatSyncTime(lastSyncAt)}.`,
     syncing: 'Synchronisation en cours…',
-    synced: `À jour : dernière synchro ${formatSyncTime(lastSyncAt)}. Chaque modification est envoyée quelques secondes après.`,
+    synced: drive.pending
+      ? `Des modifications ne sont pas encore sur Drive. Dernière synchro ${formatSyncTime(lastSyncAt)}.`
+      : `À jour : dernière synchro ${formatSyncTime(lastSyncAt)}.`,
     error: `Dernière synchro réussie ${formatSyncTime(lastSyncAt)}.`,
   }
 
@@ -402,7 +404,8 @@ function SyncCard({ drive }: { drive: DriveSync }) {
         Google. L'application range un seul fichier dans un dossier « {FOLDER_NAME} »
         de ton Google Drive, et n'a accès qu'aux fichiers qu'elle a créés : rien
         d'autre de ton Drive. Ajouts, modifications et suppressions passent d'un
-        appareil à l'autre.
+        appareil à l'autre : après chaque changement, l'application propose de
+        l'envoyer, et un appareil vide se remplit depuis Drive à la connexion.
       </p>
       <p className="text-sm text-gray-700 dark:text-gray-300 mb-4">{state[status]}</p>
 
@@ -635,7 +638,7 @@ export function DataPage({
               <span className="text-sm text-red-700 dark:text-red-300">
                 {drive.status === 'off' || drive.status === 'unavailable'
                   ? "Effacer tout l'historique importé et repartir du fichier initial ?"
-                  : 'Effacer ce navigateur ? La synchro Google Drive rechargera ensuite la copie : désactive-la d’abord pour repartir de zéro.'}
+                  : 'Effacer ce navigateur ? La copie Google Drive reste intacte et pourra le remplir de nouveau : désactive d’abord la synchro pour repartir de zéro.'}
               </span>
               <button
                 onClick={() => {

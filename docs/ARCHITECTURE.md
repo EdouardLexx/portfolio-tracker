@@ -442,10 +442,17 @@ Trois pièces, du plus pur au plus concret :
   la copie » la met à la corbeille et laisse le dossier), `revoke`. `GOOGLE_CLIENT_ID` vide : la synchro n'est pas
   proposée.
 - `src/hooks/useDriveSync.ts` — appelé par `usePortfolio` avec les données et
-  `applyData`. Jeton en mémoire ; statut `unavailable`, `off`, `signed-out`,
-  `syncing`, `synced` ou `error` ; envoi automatique 3 s après la dernière
-  modification tant que le jeton est valide ; une modification faite pendant
-  un aller-retour est fusionnée par-dessus, puis envoyée au tour suivant.
+  `applyData`. Jeton dans le `sessionStorage` de l'onglet
+  (`portefeuille.driveToken`, une heure) : un rechargement garde la connexion
+  et met à jour depuis Drive à l'ouverture. Statut `unavailable`, `off`,
+  `signed-out`, `syncing`, `synced` ou `error`, plus `pending` (changements
+  locaux absents de Drive, symboles exclus : ce n'est qu'un cache). Rien ne
+  part sans clic : `prompt` vaut `restore` (appareil vide), `push` (changements
+  à envoyer) ou `pull` (page ouverte sans connexion), affiché par
+  `src/components/SyncPrompt.tsx` ; « Plus tard » attend le changement
+  suivant. Un appareil vide synchronise sans base : il prend la copie telle
+  quelle, son vide n'est jamais lu comme des suppressions. Une modification
+  faite pendant un aller-retour est fusionnée par-dessus.
   Réglages dans `portfolio.sync.v1`, base dans `portfolio.syncBase.v1`.
 
 Interface : carte « Synchronisation Google Drive » de la page Données, et

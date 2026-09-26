@@ -32,6 +32,30 @@ export class AuthError extends Error {}
 export const tokenValid = (token: DriveToken | null): token is DriveToken =>
   !!token && Date.now() < token.expiresAt
 
+/**
+ * The token survives a reload of the tab, not the tab itself: sessionStorage
+ * is per tab and cleared when it closes.
+ */
+const TOKEN_KEY = 'portefeuille.driveToken'
+
+export function savedToken(): DriveToken | null {
+  try {
+    const t = JSON.parse(sessionStorage.getItem(TOKEN_KEY) ?? 'null') as DriveToken | null
+    return t && typeof t.accessToken === 'string' && tokenValid(t) ? t : null
+  } catch {
+    return null
+  }
+}
+
+export function keepToken(token: DriveToken | null): void {
+  try {
+    if (token) sessionStorage.setItem(TOKEN_KEY, JSON.stringify(token))
+    else sessionStorage.removeItem(TOKEN_KEY)
+  } catch {
+    /* the token then lasts as long as the page */
+  }
+}
+
 /** Where Google sends the user back, for every origin the app runs on. */
 export function redirectUri(): string {
   return new URL('oauth.html', `${location.origin}${import.meta.env.BASE_URL}`).href

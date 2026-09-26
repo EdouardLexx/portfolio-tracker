@@ -556,7 +556,17 @@ ne peut pas faire, et combine les changements faits des deux côtés.
 ### Consequence
 - L'utilisateur reclique toutes les heures environ pour se reconnecter (une
   fenêtre s'ouvre et se referme seule). Aucune connexion n'est tentée sans clic,
-  car les navigateurs bloquent les fenêtres non demandées.
+  car les navigateurs bloquent les fenêtres non demandées. Le jeton est gardé
+  dans le `sessionStorage` de l'onglet : un rechargement ne déconnecte pas.
+- Rien n'est envoyé sans clic, choix de l'auteur : après une modification, une
+  fenêtre propose « Synchroniser avec Google Drive ? » (d'abord un envoi
+  automatique 3 s après chaque modification, remplacé : il échouait sans bruit
+  une fois le jeton expiré, et l'utilisateur ne savait pas si ses changements
+  étaient partis). À l'ouverture sans connexion, la fenêtre propose de mettre
+  à jour depuis Drive.
+- Un appareil vide prend la copie Drive telle quelle (synchro sans base) :
+  lu contre une ancienne base, son vide supprimerait tout sur Drive. Vider
+  Drive passe par « Désactiver et mettre la copie Drive à la corbeille ».
 - Drive n'a pas d'écriture conditionnelle : la version est relue juste avant
   d'écrire, une course entre deux appareils reste possible dans cette fraction
   de seconde ; un conflit détecté relance la synchro.

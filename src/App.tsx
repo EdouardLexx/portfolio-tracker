@@ -11,6 +11,7 @@ import { SavingsPage } from './pages/Savings'
 import { LoansPage } from './pages/Loans'
 import { formatSyncTime } from './utils/dates'
 import { DriveIcon } from './components/DriveIcon'
+import { SyncPrompt } from './components/SyncPrompt'
 
 // AGPL §13: a modified version offered to users must point to its own source.
 const SOURCE_URL = 'https://github.com/EdouardLexx/portfolio-tracker'
@@ -102,7 +103,9 @@ export default function App() {
       ? 'Connecter Google Drive'
       : drive.status === 'syncing'
         ? 'Synchronisation…'
-        : drive.status === 'synced'
+        : drive.pending && drive.status !== 'error'
+          ? 'Modifications à envoyer'
+          : drive.status === 'synced'
           ? `Synchronisé ${formatSyncTime(drive.lastSyncAt)}`
           : drive.status === 'error'
             ? 'Erreur de synchro, réessayer'
@@ -110,7 +113,7 @@ export default function App() {
   const syncTone =
     drive.status === 'error'
       ? 'text-red-600 dark:text-red-400'
-      : drive.status === 'signed-out'
+      : drive.status === 'signed-out' || drive.pending
         ? 'text-amber-700 dark:text-amber-400'
         : 'text-gray-600 dark:text-gray-400'
 
@@ -415,6 +418,7 @@ export default function App() {
           </div>
         </div>
       </div>
+      {syncShown && <SyncPrompt drive={drive} />}
     </div>
   )
 }

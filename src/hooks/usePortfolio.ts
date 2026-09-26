@@ -64,7 +64,6 @@ import {
   clearSavings,
   loadLoans,
   saveLoans,
-  clearSyncBase,
 } from '../utils/store'
 import { useDriveSync } from './useDriveSync'
 import {
@@ -675,7 +674,7 @@ export function usePortfolio(scope: Scope) {
     return true
   }, [])
 
-  const drive = useDriveSync(backupData, applyData)
+  const drive = useDriveSync(backupData, applyData, ready)
 
   /** Everything stored, as a file-ready backup. */
   const exportBackup = useCallback((): Backup => createBackup(backupData), [backupData])
@@ -716,10 +715,11 @@ export function usePortfolio(scope: Scope) {
     [backupData, applyData]
   )
 
+  const { forgetBase } = drive
   const resetData = useCallback(() => {
     // The Drive copy is not wiped with this device: without a base, the next
     // sync brings it back in full instead of reading the reset as deletions.
-    clearSyncBase()
+    forgetBase()
     clearAllData()
     setImports([])
     setSymbols({})
@@ -728,7 +728,7 @@ export function usePortfolio(scope: Scope) {
     setAllTransactions([])
     setReady(false)
     seedFromBundledCsv()
-  }, [seedFromBundledCsv])
+  }, [seedFromBundledCsv, forgetBase])
 
   return {
     allTransactions,
