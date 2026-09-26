@@ -103,6 +103,8 @@ function readStoredPortfolio() {
  * when nothing is stored yet. Empty when the file does not exist.
  */
 async function readBundledCsv(): Promise<Transaction[]> {
+  // The online version is built by the CI, where the file never exists.
+  if (import.meta.env.VITE_API_BASE) return []
   try {
     const res = await fetch(`${import.meta.env.BASE_URL}Transactions.csv`)
     // Without the file, Vite's SPA fallback answers 200 with index.html.

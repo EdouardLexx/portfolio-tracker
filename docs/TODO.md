@@ -46,12 +46,14 @@ puis à essayer avec un vrai compte sur deux appareils.
 section Synchronisation). Décisions : appels à Google seulement une fois la
 synchro activée, sans script Google ; pas de chiffrement.
 
-**Étape 3 — interface en ligne pour le téléphone.** Codée et testée en local
-(interface sous `/portfolio-tracker/`, relais sur une autre origine). Reste, côté
-comptes : projet Vercel importé depuis le dépôt, variable `RELAY_URL`, GitHub
-Pages activé (source « GitHub Actions »), adresse Pages ajoutée au client
-Google, puis publication de l'appli Google (Branding, domaine vérifié). Détails :
-`docs/GOOGLE_DRIVE.md`, `docs/ARCHITECTURE.md` (Version en ligne).
+**Étape 3 — interface en ligne.** En service :
+`https://edouardlexx.github.io/portfolio-tracker/`, relais
+`https://portfolio-tracker-delta-khaki.vercel.app` (variable `RELAY_URL`).
+Reste : **publier l'appli Google** (aujourd'hui « En test », seuls les
+utilisateurs tests peuvent synchroniser) — Branding : page d'accueil, règles
+de confidentialité (`confidentialite.html`), domaine `edouardlexx.github.io`
+vérifié dans Google Search Console (fichier HTML à déposer dans `public/`).
+Voir `docs/GOOGLE_DRIVE.md`.
 
 ### Gérer les ventes et les sorties
 *Fonctionnalité planifiée.*

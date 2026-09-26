@@ -2,10 +2,19 @@
 
 Suivi de portefeuille multi-comptes avec valorisation en direct via Yahoo Finance.
 
+## Version en ligne
+
+**https://edouardlexx.github.io/portfolio-tracker/**, sur ordinateur comme sur
+téléphone, sans rien installer. Le site ne contient que l'application : vos
+données restent dans votre navigateur, et dans votre Google Drive si vous
+activez la synchronisation (bouton Google Drive en haut à gauche), ce qui vous
+permet de retrouver le même portefeuille sur tous vos appareils.
+
 ## Installation
 
-Rien à installer : on télécharge un fichier, on le lance, et l'application
-s'ouvre dans le navigateur.
+Pour l'utiliser sur votre ordinateur, sans passer par Internet pour l'interface,
+rien à installer non plus : on télécharge un fichier, on le lance, et
+l'application s'ouvre dans le navigateur.
 
 | Votre ordinateur | Fichier à télécharger |
 |---|---|

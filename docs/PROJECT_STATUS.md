@@ -162,6 +162,10 @@ GitHub les accepte ; à monter de version à la prochaine alerte de la CI.
 
 Du plus récent au plus ancien.
 
+- **Version en ligne** (étape 3) : interface sur GitHub Pages
+  (`https://edouardlexx.github.io/portfolio-tracker/`), relais des cours sur
+  Vercel, synchro Drive disponible pour les utilisateurs tests de l'appli
+  Google en attendant sa publication.
 - **Synchronisation Google Drive** (étape 2) : fusion à trois voies, connexion
   Google sans script, carte dans Données et état dans la barre latérale.
   Testée de bout en bout avec un faux Google ; inactive tant que le client
