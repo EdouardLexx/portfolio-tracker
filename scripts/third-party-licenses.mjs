@@ -57,6 +57,7 @@ const sections = packages.map(({ path, name, version, license }) => {
 })
 
 const bun = readFileSync('scripts/licenses/bun.md', 'utf8').trim()
+const logos = readFileSync('scripts/licenses/logos.md', 'utf8').trim()
 
 const header = `Portefeuille — mentions de licences des composants tiers
 Généré par scripts/third-party-licenses.mjs. Ne pas modifier à la main.
@@ -76,6 +77,12 @@ remplacer Bun ou JavaScriptCore et refabriquer l'application avec
 \`npm run package\` (voir le README).
 
 ${bun}
+
+${RULE}
+Logos des courtiers
+${RULE}
+
+${logos}
 `
 
 writeFileSync(OUT, `${header}\n${sections.join('\n')}`)
