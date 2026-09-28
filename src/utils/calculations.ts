@@ -61,6 +61,8 @@ export function buildPositions(
     costEUR: number
     grossLocal: number
     currency: string
+    /** Bought in more than one currency: `grossLocal` adds apples and pears. */
+    mixedCurrency: boolean
     brokerFees: number
     fxFees: number
     orderRefs: Set<string>
@@ -83,6 +85,7 @@ export function buildPositions(
         costEUR: 0,
         grossLocal: 0,
         currency: tx.currency,
+        mixedCurrency: false,
         brokerFees: 0,
         fxFees: 0,
         orderRefs: new Set(),
@@ -93,6 +96,7 @@ export function buildPositions(
     }
 
     b.accounts.add(tx.account)
+    if (tx.currency !== b.currency) b.mixedCurrency = true
     b.quantity += tx.quantity
     b.costEUR += tx.amountEUR
     b.grossLocal += tx.grossLocal
@@ -143,7 +147,12 @@ export function buildPositions(
       quantity: b.quantity,
       totalCostEUR: b.costEUR,
       avgCostEUR: b.costEUR / b.quantity,
-      avgCostLocal: b.grossLocal / b.quantity,
+      // A US share bought in euros (Trade Republic) has no cost in dollars:
+      // the euro cost is shown at today's rate instead.
+      avgCostLocal:
+        b.mixedCurrency || b.currency !== currency
+          ? (b.costEUR / b.quantity) * (rates[currency] ?? 1)
+          : b.grossLocal / b.quantity,
       currentPriceLocal,
       currentPriceEUR,
       currentValueEUR,

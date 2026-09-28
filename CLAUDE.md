@@ -12,8 +12,8 @@ positions avec des cours en direct et calcule performance et répartition.
 
 Fonctionnalités réellement présentes :
 
-- import de relevés (CSV DEGIRO, PDF Boursorama, CSV Ledger Live, CSV compte
-  Boursorama) et saisie manuelle (or, cash, versements Livret A) ;
+- import de relevés (CSV DEGIRO, CSV Trade Republic, PDF Boursorama, CSV
+  Ledger Live, CSV compte Boursorama) et saisie manuelle (or, cash, versements Livret A) ;
 - déduplication à l'import, historique cumulatif ;
 - valorisation multi-devises via Yahoo Finance ;
 - performance TWR comparée au S&P 500 et au Nasdaq 100 ;
@@ -120,7 +120,10 @@ affichés : vérifier avant de toucher.
 
 - **Achats seulement.** Ventes et sorties sont détectées, signalées à l'import
   puis **ignorées** : DEGIRO `quantité < 0`, PDF « VENTE COMPTANT », Ledger
-  `OUT` et opérations non confirmées.
+  `OUT` et opérations non confirmées. **Exception, Trade Republic** : son
+  parseur déduit les ventes au prix moyen pondéré et ne rend que les achats
+  encore détenus (toujours des achats pour le reste de l'appli) ; un nouvel
+  export remplace les lignes de l'ancien (`supersedes`).
 - **Prix de revient** = `amountEUR`, en euros historiques réels.
   **L'inclusion des frais diffère selon la source** (voir `docs/ARCHITECTURE.md`,
   section Frais) : DEGIRO les **exclut**, PEA et Ledger les **incluent**.
@@ -193,6 +196,9 @@ affichés : vérifier avant de toucher.
   documentation un chiffre, un titre, une date ou un montant issu des données
   réelles de l'utilisateur. Utiliser des exemples fictifs ou des faits publics.
   Aucun `.csv`, `.pdf` ou `.xlsx` ne doit être commité.
+- **Logos des courtiers** (`src/assets/logos/`, page Données) : fichiers de
+  Wikimedia Commons, crédités dans `scripts/licenses/logos.md` (Ledger est
+  sous CC BY-SA 4.0 : la mention doit rester).
 - **Le port 4719 et l'hôte `127.0.0.1` de l'exécutable** : le navigateur range
   les données par origine, en changer ouvre un portefeuille vide.
 - `scripts/embed-dist.mjs` **exclut les fichiers de données** de `dist/` : sans

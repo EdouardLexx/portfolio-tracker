@@ -3,6 +3,7 @@ export type AccountKind =
   | 'pea'
   | 'degiro'
   | 'ledger'
+  | 'traderepublic'
   | 'gold'
   | 'savings'
   | 'cash'
@@ -17,6 +18,7 @@ export interface AccountMeta {
 export const ACCOUNTS: AccountMeta[] = [
   { kind: 'pea', label: 'PEA (Boursorama)', shortLabel: 'PEA', color: '#10b981' },
   { kind: 'degiro', label: 'CTO (DEGIRO)', shortLabel: 'DEGIRO', color: '#3b82f6' },
+  { kind: 'traderepublic', label: 'CTO (Trade Republic)', shortLabel: 'Trade Republic', color: '#ec4899' },
   { kind: 'ledger', label: 'Crypto (Ledger)', shortLabel: 'Ledger', color: '#f59e0b' },
   { kind: 'gold', label: 'Or physique', shortLabel: 'Or', color: '#ca8a04' },
   { kind: 'savings', label: 'Livret A', shortLabel: 'Livret A', color: '#0ea5e9' },
@@ -254,4 +256,10 @@ export interface SymbolInfo {
 export interface ParseResult {
   transactions: Transaction[]
   warnings: string[]
+  /**
+   * Order references this file rewrites: stored lines of the same account
+   * and reference that the file no longer yields (sold since, or held in a
+   * different quantity) are replaced by the file's version.
+   */
+  supersedes?: string[]
 }

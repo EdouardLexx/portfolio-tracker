@@ -164,6 +164,11 @@ GitHub les accepte ; à monter de version à la prochaine alerte de la CI.
 
 Du plus récent au plus ancien.
 
+- **Trade Republic** : import de l'export des transactions ; ventes déduites
+  au prix moyen pondéré, seuls les titres encore détenus restent ; un nouvel
+  export remplace l'ancien. Vérifié sur un vrai export (titres soldés retirés,
+  frais inclus) et sur un cas fictif de vente partielle. Logos des courtiers
+  dans la liste des données compatibles.
 - **Synchro Drive plus naturelle** : plus d'envoi automatique ; une fenêtre en
   bas à droite propose de récupérer (appareil vide), d'envoyer (après une
   modification) ou de mettre à jour (page ouverte sans connexion Google). Un

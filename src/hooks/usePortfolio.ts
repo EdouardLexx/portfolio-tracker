@@ -13,6 +13,7 @@ import type {
 import { SAVINGS_KINDS } from '../types'
 import { parseDegiroCsv } from '../parsers/degiroCsv'
 import { parseLedgerCsv, isLedgerCsv } from '../parsers/ledgerCsv'
+import { parseTradeRepublicCsv, isTradeRepublicCsv } from '../parsers/tradeRepublicCsv'
 import {
   parseBoursoramaAccountCsv,
   isBoursoramaAccountCsv,
@@ -375,6 +376,7 @@ export function usePortfolio(scope: Scope) {
   const importFiles = useCallback(
     async (files: File[]): Promise<ImportOutcome> => {
       const incoming: Transaction[] = []
+      const superseded = new Set<string>()
       const warnings: string[] = []
       const records: ImportRecord[] = []
       let linesRead = 0
@@ -393,6 +395,8 @@ export function usePortfolio(scope: Scope) {
           const text = await file.text()
           if (isLedgerCsv(text)) {
             result = await parseLedgerCsv(text, file.name)
+          } else if (isTradeRepublicCsv(text)) {
+            result = parseTradeRepublicCsv(text, file.name)
           } else if (isBoursoramaAccountCsv(text)) {
             result = parseBoursoramaAccountCsv(text, file.name)
             // Imported statements are authoritative; drop any manual balance.
@@ -407,13 +411,14 @@ export function usePortfolio(scope: Scope) {
 
         warnings.push(...result.warnings)
         incoming.push(...result.transactions)
+        for (const ref of result.supersedes ?? []) superseded.add(ref)
         linesRead += result.transactions.length
 
         records.push({
           id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
           fileName: file.name,
           kind: isPdf ? 'pdf' : 'csv',
-          account: result.transactions[0]?.account ?? 'degiro',
+          account: result.transactions[0]?.account ?? (result.supersedes ? 'traderepublic' : 'degiro'),
           importedAt: new Date().toISOString(),
           linesInFile: result.transactions.length,
           added: 0,
@@ -421,7 +426,18 @@ export function usePortfolio(scope: Scope) {
         })
       }
 
-      if (!incoming.length) {
+      // A file that restates its lines (sales since the last import) drops
+      // the stored versions it no longer yields.
+      const incomingIds = new Set(incoming.map((t) => t.id))
+      const kept = allTransactions.filter(
+        (t) =>
+          !superseded.has(t.orderRef) ||
+          t.account !== 'traderepublic' ||
+          incomingIds.has(t.id)
+      )
+      const replaced = allTransactions.length - kept.length
+
+      if (!incoming.length && !replaced) {
         return {
           ok: false,
           warnings,
@@ -431,10 +447,7 @@ export function usePortfolio(scope: Scope) {
         }
       }
 
-      const { merged, added, duplicates } = mergeTransactions(
-        allTransactions,
-        incoming
-      )
+      const { merged, added, duplicates } = mergeTransactions(kept, incoming)
 
       if (!saveTransactions(merged)) {
         return {
@@ -465,9 +478,15 @@ export function usePortfolio(scope: Scope) {
         added,
         duplicates,
         warnings,
-        message: added
-          ? `${added} transaction${s(added)} ajoutée${s(added)} sur ${linesRead} lue${s(linesRead)}, ${duplicates} déjà connue${s(duplicates)}.`
-          : `Aucune nouveauté : les ${duplicates} transaction${s(duplicates)} lue${s(duplicates)} étaient déjà enregistrées.`,
+        message:
+          (added
+            ? `${added} transaction${s(added)} ajoutée${s(added)} sur ${linesRead} lue${s(linesRead)}, ${duplicates} déjà connue${s(duplicates)}.`
+            : duplicates
+              ? `Aucune nouveauté : les ${duplicates} transaction${s(duplicates)} lue${s(duplicates)} étaient déjà enregistrées.`
+              : 'Aucun titre encore détenu dans ce fichier.') +
+          (replaced
+            ? ` ${replaced} ligne${s(replaced)} retirée${s(replaced)} ou mise${s(replaced)} à jour après des ventes.`
+            : ''),
       }
     },
     [allTransactions, imports]

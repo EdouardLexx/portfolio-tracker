@@ -13,6 +13,10 @@ import type { DriveSync } from '../hooks/useDriveSync'
 import { FOLDER_NAME } from '../api/googleDrive'
 import { DriveIcon } from '../components/DriveIcon'
 import { formatSyncTime, localToday } from '../utils/dates'
+import degiroLogo from '../assets/logos/degiro.svg'
+import boursoramaLogo from '../assets/logos/boursorama.svg'
+import tradeRepublicLogo from '../assets/logos/traderepublic.svg'
+import ledgerLogo from '../assets/logos/ledger.svg'
 
 interface DataPageProps {
   transactions: Transaction[]
@@ -78,13 +82,23 @@ function AccountBadge({
 const FILE_SOURCES = [
   {
     account: 'degiro',
+    logo: degiroLogo,
     source: 'Compte-titres DEGIRO',
     format: 'CSV',
     file: 'Export « Transactions », avec l’interface DEGIRO en français.',
     note: 'Les ventes sont ignorées.',
   },
   {
+    account: 'traderepublic',
+    logo: tradeRepublicLogo,
+    source: 'Compte-titres Trade Republic',
+    format: 'CSV',
+    file: 'Export des transactions (« Transaction export »), idéalement tout l’historique.',
+    note: 'Seuls les titres encore détenus sont gardés, au prix de revient moyen. Dividendes et compte espèces ignorés.',
+  },
+  {
     account: 'pea',
+    logo: boursoramaLogo,
     source: 'PEA Boursorama',
     format: 'PDF',
     file: 'Avis d’opéré « Opération de bourse », un par exécution ; plusieurs à la fois.',
@@ -92,6 +106,7 @@ const FILE_SOURCES = [
   },
   {
     account: 'ledger',
+    logo: ledgerLogo,
     source: 'Crypto Ledger Live',
     format: 'CSV',
     file: 'Export de l’historique des opérations.',
@@ -99,6 +114,7 @@ const FILE_SOURCES = [
   },
   {
     account: 'savings',
+    logo: boursoramaLogo,
     source: 'Livret A Boursorama',
     format: 'CSV',
     file: 'Relevé des opérations du livret, intérêts compris.',
@@ -136,7 +152,7 @@ const MANUAL_SOURCES = [
 ]
 
 const NOT_SUPPORTED_YET =
-  'ventes et retraits de titres, dividendes, autres courtiers, assurance-vie, immobilier et prêts immobiliers, remboursements anticipés, comptes courants.'
+  'ventes et retraits de titres (sauf Trade Republic), dividendes, autres courtiers, assurance-vie, immobilier et prêts immobiliers, remboursements anticipés, comptes courants.'
 
 function SupportedData() {
   const rowClass =
@@ -149,11 +165,17 @@ function SupportedData() {
       <ul className="divide-y divide-gray-100 dark:divide-gray-800 mb-5">
         {FILE_SOURCES.map((s) => (
           <li key={s.source} className={rowClass}>
-            <div className="flex items-center gap-2 sm:w-52 shrink-0">
-              <AccountBadge kind={s.account} />
-              <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                {s.source}
+            <div className="flex items-center gap-3 sm:w-72 shrink-0">
+              {/* Dark wordmarks: a light tile keeps them readable in dark mode. */}
+              <span className="w-24 h-9 shrink-0 flex items-center justify-center rounded-lg bg-white dark:bg-gray-100 border border-gray-200 dark:border-gray-700 px-2">
+                <img src={s.logo} alt="" className="max-h-5 max-w-full" />
               </span>
+              <div className="flex flex-col items-start gap-1">
+                <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                  {s.source}
+                </span>
+                <AccountBadge kind={s.account} />
+              </div>
             </div>
             <span className="self-start text-xs font-mono px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300">
               {s.format}

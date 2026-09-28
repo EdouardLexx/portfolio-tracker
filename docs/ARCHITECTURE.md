@@ -99,6 +99,7 @@ Constantes : `ACCOUNTS` (libellés et couleurs), `SAVINGS_KINDS`, `COIN_SPECS`
 | `boursoramaPdf.ts` | avis d'opéré PDF | texte « OPERATION DE BOURSE » |
 | `boursoramaAccountCsv.ts` | relevé de compte CSV | en-têtes `Date Opération` + `Libellé Compte` |
 | `ledgerCsv.ts` | export Ledger Live | en-têtes `Operation Date` + `Currency Ticker` |
+| `tradeRepublicCsv.ts` | « Transaction export » Trade Republic | en-têtes `account_type`, `asset_class`, `transaction_id`, `original_currency` |
 | `goldManual.ts` | saisie manuelle or | — |
 | `savingsManual.ts` | saisie manuelle Livret A / cash, solde de départ | — |
 | `shared.ts` | utilitaires communs | — |
@@ -116,6 +117,7 @@ C'est le point le plus important à connaître avant de toucher aux chiffres.
 |---|---|---|
 | DEGIRO | colonne 11 « Montant EUR » (brut converti) | **non** |
 | PEA (PDF) | montant net débité | **oui** |
+| Trade Republic | montant + frais + taxe, au prorata de ce qui est encore détenu | **oui** |
 | Ledger | `costEUR + feesEUR` | **oui** (rangés dans `fxFeesEUR`) |
 | Or | `prix unitaire × quantité` | sans objet (frais = 0) |
 | Livret A / cash | montant du mouvement | sans objet (frais = 0) |
@@ -125,6 +127,21 @@ rapport au PEA, puisque ses frais ne pèsent pas sur le coût. L'écart est faib
 (0,5 % des montants) mais réel, et **non intentionnel** — voir TODO.
 
 ### Particularités par source
+
+- **Trade Republic** : l'export mêle titres et compte espèces, ventes
+  comprises. Le parseur rejoue chaque titre dans l'ordre (`datetime`) au prix
+  moyen pondéré et ne rend que les achats depuis la dernière clôture de la
+  ligne, réduits à la quantité encore détenue et à son coût restant. Le net de
+  tous les mouvements tranche en dernier : l'export inscrit des actions
+  gratuites et leurs annulations après la vente qui a soldé la ligne. Le frais
+  de souscription d'une introduction en bourse (`IPO_SUBSCRIPTION`) va à
+  l'achat qui suit. Le résultat porte `supersedes` (les `transaction_id` des
+  achats du fichier) : à l'import, les lignes Trade Republic de même référence
+  que le fichier ne rend plus telles quelles sont retirées, si bien qu'un
+  export plus récent, après une vente, remplace l'ancien au lieu de s'y
+  ajouter. Prix et coût en euros (Trade Republic exécute en euros) ; pour une
+  action cotée en dollars, le PRU en devise des positions est alors le coût en
+  euros au taux du jour (`calculations.ts`).
 
 - **Boursorama PDF** : le bloc des totaux imprime tous les libellés puis toutes
   les valeurs ; `readTotals` lit donc la séquence de valeurs et déduit

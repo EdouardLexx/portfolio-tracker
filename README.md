@@ -111,8 +111,9 @@ connexion dure environ une heure, puis un clic sur « Drive : se connecter »
 (barre latérale) la renouvelle. Configuration côté Google (une fois, pour qui
 compile l'application) : [`docs/GOOGLE_DRIVE.md`](docs/GOOGLE_DRIVE.md).
 
-**Limite importante** : les ventes ne sont pas encore prises en compte. Si vous
-avez déjà vendu des titres, les chiffres affichés seront faux. Cet outil ne
+**Limite importante** : les ventes ne sont pas encore prises en compte (sauf
+dans l'export Trade Republic). Si vous avez déjà vendu des titres, les chiffres
+affichés seront faux. Cet outil ne
 constitue pas un conseil en investissement.
 
 Sources reconnues :
@@ -120,6 +121,7 @@ Sources reconnues :
 | Compte | Format | Fichier | À savoir |
 |---|---|---|---|
 | CTO DEGIRO | CSV | export « Transactions » | interface DEGIRO en français ; ventes ignorées |
+| CTO Trade Republic | CSV | export des transactions (« Transaction export ») | ventes déduites : seuls les titres encore détenus restent, au prix de revient moyen ; dividendes et compte espèces ignorés |
 | PEA Boursorama | PDF | avis d'opéré (« OPERATION DE BOURSE »), un par exécution | ventes ignorées ; pas encore les avis d'un compte-titres Boursorama |
 | Crypto Ledger | CSV | export « operations » de Ledger Live | réceptions confirmées seulement ; envois ignorés |
 | Livret A | CSV | export « opérations » Boursorama du livret | relevé du Livret A uniquement |
@@ -411,7 +413,8 @@ produit des valeurs absurdes (25 jours de détention à +30 % donnerait +4000 %/
 
 **Frais** — affichés séparément dans la carte Frais de la page Investissements.
 Leur place dans le prix de revient **dépend de la source** : inclus pour le PEA
-(montant net de l'avis d'opéré) et Ledger (frais de réseau), exclus pour DEGIRO
+(montant net de l'avis d'opéré), Trade Republic (frais d'ordre et taxe sur les
+transactions financières) et Ledger (frais de réseau), exclus pour DEGIRO
 (colonne « Montant EUR », avant frais). La performance DEGIRO est donc
 légèrement flattée par rapport aux autres comptes ; l'harmonisation est notée
 dans `docs/TODO.md`.

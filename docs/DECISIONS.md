@@ -613,3 +613,47 @@ réécriture, avec un compte GitHub.
   et la page `public/confidentialite.html` sert de règles de confidentialité à
   l'écran de consentement Google.
 
+## Trade Republic : les ventes déduites dans le parseur
+
+### Decision
+L'export Trade Republic est lu par `src/parsers/tradeRepublicCsv.ts`. Les
+ventes y sont déduites au prix moyen pondéré (la règle fiscale française du
+compte-titres) : le parseur ne rend que les achats encore détenus, réduits en
+quantité et en coût. Frais d'ordre et taxe sur les transactions financières
+sont inclus dans le prix de revient, comme pour le PEA. Dividendes, intérêts et
+compte espèces (virements, carte) sont ignorés et signalés. Choix de l'auteur,
+sur son premier export.
+
+### Reason
+L'export contient tout l'historique, ventes comprises ; ignorer les ventes,
+comme pour les autres sources, afficherait des titres vendus depuis longtemps.
+Déduire dans le parseur garde le reste de l'appli inchangé : il ne connaît
+toujours que des achats.
+
+### Alternatives
+- Ignorer les ventes comme ailleurs : positions fausses dès la première vente.
+- Gérer les ventes dans tout le modèle (plus-values réalisées, historique
+  complet, tous les courtiers) : le bon cap, mais un chantier à part.
+
+### Consequence
+- Un titre entièrement vendu disparaît aussi de l'historique : la courbe de
+  valeur et le TWR ne voient pas cet argent passé par le compte.
+- Les lignes gardées dépendent des ventes : leur identifiant change quand on
+  vend. L'import retire donc les lignes Trade Republic que le fichier réécrit
+  (`supersedes`) ; un export partiel ne retire que ce qu'il couvre.
+- Trade Republic exécute en euros : une action américaine a un coût en euros
+  et un cours en dollars ; son PRU en devise s'affiche au taux du jour.
+
+## Logos des courtiers repris de Wikimedia Commons
+
+### Decision
+La liste des données compatibles montre le logo de chaque courtier, embarqué
+dans l'appli (`src/assets/logos/`), jamais chargé à l'exécution. Fichiers de
+Wikimedia Commons, nettoyés (métadonnées retirées, vérifiés sans script) ;
+trois sont dans le domaine public, celui de Ledger sous CC BY-SA 4.0, crédité
+dans `scripts/licenses/logos.md` et donc dans `THIRD_PARTY_LICENSES.txt`.
+
+### Reason
+Demande de l'auteur : repérer d'un coup d'œil sa banque. Les sites des courtiers
+bloquent ou ne publient pas de logo exploitable ; Commons donne des SVG propres
+et une licence claire.

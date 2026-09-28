@@ -36,7 +36,7 @@ const CLASSES: {
     label: 'Investissements',
     description: 'PEA, CTO, crypto et or physique',
     color: '#3b82f6',
-    accounts: ['pea', 'degiro', 'ledger', 'gold'],
+    accounts: ['pea', 'degiro', 'traderepublic', 'ledger', 'gold'],
   },
   {
     id: 'savings',
