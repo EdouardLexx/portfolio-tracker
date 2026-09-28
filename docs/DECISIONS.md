@@ -657,3 +657,30 @@ dans `scripts/licenses/logos.md` et donc dans `THIRD_PARTY_LICENSES.txt`.
 Demande de l'auteur : repérer d'un coup d'œil sa banque. Les sites des courtiers
 bloquent ou ne publient pas de logo exploitable ; Commons donne des SVG propres
 et une licence claire.
+
+## Demandes de nouvelles banques : extrait anonymisé, ticket GitHub
+
+### Decision
+La page Données propose « Demander son ajout » : l'export choisi est réduit à
+un extrait anonymisé dans le navigateur, relu et corrigeable, puis un ticket
+GitHub prérempli s'ouvre ; la personne le publie depuis son propre compte.
+Choix de l'auteur, entre ticket GitHub, formulaire privé (relais Vercel vers un
+dépôt privé) et e-mail.
+
+### Reason
+Un export brut contient nom, IBAN, dépenses par carte : il ne doit jamais
+quitter l'appareil. L'extrait garde ce qu'il faut pour écrire un parseur
+(colonnes, formats, codes d'opération). Le ticket ne demande rien à héberger,
+et Claude Code lit les tickets directement.
+
+### Alternatives
+- Envoi du fichier complet : contraire à la promesse de confidentialité.
+- Formulaire privé via le relais : sans compte GitHub, mais dépôt privé, jeton
+  secret dans Vercel et protection anti-spam à prévoir.
+- E-mail : adresse publique à exposer, longueur des liens `mailto` limitée.
+
+### Consequence
+- La demande est publique et exige un compte GitHub.
+- L'anonymisation est une heuristique : la relecture par l'expéditeur fait
+  partie du processus, d'où l'extrait modifiable et l'avertissement.
+- CSV seulement ; un PDF se décrit dans le commentaire.

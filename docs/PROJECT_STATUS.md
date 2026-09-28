@@ -164,6 +164,9 @@ GitHub les accepte ; à monter de version à la prochaine alerte de la CI.
 
 Du plus récent au plus ancien.
 
+- **Demande d'ajout d'une banque** (page Données) : extrait anonymisé dans le
+  navigateur, relu, puis ticket GitHub prérempli. Anonymisation vérifiée sur un
+  vrai export (ni nom, ni IBAN, ni ISIN, ni montant ne ressort).
 - **Trade Republic** : import de l'export des transactions ; ventes déduites
   au prix moyen pondéré, seuls les titres encore détenus restent ; un nouvel
   export remplace l'ancien. Vérifié sur un vrai export (titres soldés retirés,

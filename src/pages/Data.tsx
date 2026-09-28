@@ -12,6 +12,7 @@ import { parseBackup, type Backup } from '../utils/backup'
 import type { DriveSync } from '../hooks/useDriveSync'
 import { FOLDER_NAME } from '../api/googleDrive'
 import { DriveIcon } from '../components/DriveIcon'
+import { BankRequest } from '../components/BankRequest'
 import { formatSyncTime, localToday } from '../utils/dates'
 import degiroLogo from '../assets/logos/degiro.svg'
 import boursoramaLogo from '../assets/logos/boursorama.svg'
@@ -212,6 +213,9 @@ function SupportedData() {
         </span>{' '}
         {NOT_SUPPORTED_YET}
       </p>
+      <div className="mt-4">
+        <BankRequest />
+      </div>
     </Card>
   )
 }

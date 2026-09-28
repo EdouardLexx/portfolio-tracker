@@ -254,6 +254,18 @@ affichés : vérifier avant de toucher.
 - API : `curl http://127.0.0.1:3001/api/...` ; `server.js` ne se recharge pas
   seul après une modification de `server/api.js`, le relancer.
 
+## Adding a bank from a request
+
+Les demandes arrivent en tickets GitHub « [Nouvelle banque] … », ouverts
+depuis la page Données (`src/components/BankRequest.tsx`, extrait anonymisé
+par `src/utils/anonymize.ts`). `gh issue list --search "Nouvelle banque"`,
+puis `gh issue view N`. L'extrait garde les colonnes, séparateur, formats de
+dates et de nombres et les codes d'opération (liste complète dans le ticket) ;
+les valeurs sont factices : ne jamais s'y fier pour un calcul. Écrire le
+parseur (règle 3), le tester sur un fichier fictif bâti sur ce modèle, puis
+répondre au ticket. Une règle métier ambiguë (ventes, frais, dividendes) se
+demande à l'auteur, pas au demandeur.
+
 ## Working instructions for Claude Code
 
 1. **Inspecter avant de modifier.** Lire le code concerné ; ne pas se fier à un

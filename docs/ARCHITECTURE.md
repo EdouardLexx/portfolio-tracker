@@ -109,6 +109,22 @@ Constantes : `ACCOUNTS` (libellés et couleurs), `SAVINGS_KINDS`, `COIN_SPECS`
 - `makeTransactionId` — identité d'une ligne ;
 - `mergeTransactions` — fusion **par nombre d'occurrences**.
 
+### Demande d'une nouvelle banque
+
+`src/utils/anonymize.ts` (`anonymizeCsv`, pur) fabrique un extrait partageable
+d'un export : l'en-tête est la première ligne de la largeur la plus fréquente
+(ce qui précède, titulaire ou période, est anonymisé) ; une colonne n'est
+gardée telle quelle que si toutes ses valeurs sont des codes en majuscules
+**sans chiffre** (`BUY`, `EUR`), ou des libellés courts et répétés sous un
+en-tête de type ou de catégorie. Le reste est remplacé : dates au même format,
+chiffres et lettres brouillés en gardant la forme (zéros, signes et
+séparateurs conservés), ISIN remplacés par un titre public du même pays,
+textes libres par « Texte N ». Une ligne de chaque combinaison de codes passe
+en premier, pour qu'une vente ou un dividende rare apparaisse.
+`src/components/BankRequest.tsx` montre l'extrait, modifiable, et ouvre un
+ticket GitHub prérempli (lien raccourci sous 7 500 caractères en retirant des
+lignes).
+
 ### Frais : traitement réellement différent selon la source
 
 C'est le point le plus important à connaître avant de toucher aux chiffres.
