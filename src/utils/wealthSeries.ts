@@ -83,7 +83,7 @@ export function buildWealthSeries(
 
     money += moneyByDate.get(date) ?? 0
     for (const s of sharesByDate.get(date) ?? []) {
-      holdings[s.ticker] = (holdings[s.ticker] || 0) + s.qty
+      holdings[s.ticker] = Math.max(0, (holdings[s.ticker] || 0) + s.qty)
     }
 
     let invested = 0

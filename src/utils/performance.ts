@@ -139,12 +139,24 @@ export function computePerformance({
     if (dayTxs) {
       pendingCashFlow += dayTxs.reduce((s, t) => s + t.costEUR, 0)
       for (const t of dayTxs) {
-        holdings[t.ticker] = (holdings[t.ticker] || 0) + t.qty
+        // A sale of shares bought before the imported history cannot go short.
+        holdings[t.ticker] = Math.max(0, (holdings[t.ticker] || 0) + t.qty)
       }
     }
 
-    const held = Object.keys(holdings).filter((t) => holdings[t] !== 0)
-    if (!held.length) continue
+    const held = Object.keys(holdings).filter((t) => holdings[t] > 1e-9)
+    if (!held.length) {
+      // Everything sold: the sale proceeds close the period, which restarts
+      // with the next purchase instead of being carried into it.
+      if (prevValue !== null && prevValue > 0 && pendingCashFlow < 0) {
+        const dailyReturn = -pendingCashFlow / prevValue
+        if (Number.isFinite(dailyReturn) && dailyReturn > 0) cumulative *= dailyReturn
+        raw.push({ date, twr: cumulative, value: 0 })
+      }
+      pendingCashFlow = 0
+      prevValue = null
+      continue
+    }
 
     let value = 0
     let complete = true

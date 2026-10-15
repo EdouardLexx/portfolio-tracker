@@ -24,27 +24,27 @@ export function parseDegiroCsv(csvText: string, fileName: string): ParseResult {
   const rows = result.data as string[][]
 
   const transactions: Transaction[] = []
-  let skippedSales = 0
 
   for (const row of rows.slice(1)) {
     if (!row[0] || !row[2] || !row[6]) continue
 
     const quantity = parseInt(row[6], 10)
-    if (!Number.isFinite(quantity)) continue
-    if (quantity < 0) {
-      skippedSales++
-      continue
-    }
+    if (!Number.isFinite(quantity) || !quantity) continue
+    const sale = quantity < 0
 
     const [dd, mm, yyyy] = row[0].split('-')
     const date = `${yyyy}-${mm}-${dd}`
 
     const price = parseFrenchNumber(row[7])
     const currency = row[8] || 'EUR'
-    const grossLocal = Math.abs(parseFrenchNumber(row[9]))
-    const amountEUR = Math.abs(parseFrenchNumber(row[11]))
+    const gross = Math.abs(parseFrenchNumber(row[9]))
+    const valueEUR = Math.abs(parseFrenchNumber(row[11]))
     const fxFeesEUR = Math.abs(parseFrenchNumber(row[13]))
     const brokerFeesEUR = Math.abs(parseFrenchNumber(row[14]))
+    // A buy costs the gross amount (fees apart, see ARCHITECTURE.md); a sale
+    // brings in what is left after its fees, as a negative amount.
+    const grossLocal = sale ? -gross : gross
+    const amountEUR = sale ? -(valueEUR - fxFeesEUR - brokerFeesEUR) : valueEUR
     const orderRef = row[16] || `${date}-${row[3]}`
 
     transactions.push({
@@ -74,12 +74,6 @@ export function parseDegiroCsv(csvText: string, fileName: string): ParseResult {
       orderRef,
       source: fileName,
     })
-  }
-
-  if (skippedSales) {
-    warnings.push(
-      `${fileName} : ${skippedSales} vente(s) ignorée(s) — les ventes ne sont pas encore gérées.`
-    )
   }
 
   return { transactions, warnings }

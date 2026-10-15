@@ -34,14 +34,10 @@ const num = (v: string | undefined) => {
 const DUST = 1e-7
 
 /**
- * The export is the full history of the account, sales included, while the
- * app models buys only. Sold shares are therefore taken out here: for each
- * security, only the buys since it was last fully sold are kept, scaled down
- * to the quantity still held and to its remaining cost at the weighted
- * average price (the French rule for a securities account).
- *
- * Fees and the French transaction tax are part of the cost, as on the PEA.
- * Dividends, interest and the cash account (transfers, card) are not tracked.
+ * Buys and sales of the securities account, as they happened: sales carry a
+ * negative quantity and bring in their proceeds net of fees. Fees and the
+ * French transaction tax are part of a buy's cost, as on the PEA. Dividends,
+ * interest and the cash account (transfers, card) are not tracked.
  */
 export function parseTradeRepublicCsv(csvText: string, fileName: string): ParseResult {
   if (!isTradeRepublicCsv(csvText)) {
@@ -106,102 +102,68 @@ export function parseTradeRepublicCsv(csvText: string, fileName: string): ParseR
   for (const e of events) byIsin.set(e.isin, [...(byIsin.get(e.isin) ?? []), e])
 
   const transactions: Transaction[] = []
-  const covered: string[] = []
   let sales = 0
-  let closed = 0
+  const push = (e: Event, quantity: number, gross: number, broker: number, tax: number) => {
+    const sale = quantity < 0
+    const feesEUR = broker + tax
+    const amountEUR = sale ? -(gross - feesEUR) : gross + feesEUR
+    transactions.push({
+      id: makeTransactionId({
+        account: 'traderepublic',
+        orderRef: e.ref,
+        date: e.date,
+        time: e.time,
+        isin: e.isin,
+        quantity,
+        price: e.price,
+        amountEUR,
+      }),
+      account: 'traderepublic',
+      date: e.date,
+      time: e.time,
+      isin: e.isin,
+      productName: e.name,
+      quantity,
+      price: e.price,
+      currency: 'EUR',
+      grossLocal: sale ? -gross : gross,
+      amountEUR,
+      brokerFeesEUR: broker,
+      fxFeesEUR: 0,
+      feesEUR,
+      orderRef: e.ref,
+      source: fileName,
+    })
+  }
 
   for (const list of byIsin.values()) {
     list.sort((a, b) => a.stamp.localeCompare(b.stamp))
-    for (const e of list) if (e.kind === 'buy') covered.push(e.ref)
-    sales += list.filter((e) => e.kind === 'sell').length
-
-    let held = 0
-    let cost = 0
-    let period: Event[] = []
     let pendingFee = 0
     for (const e of list) {
       if (e.kind === 'fee') {
         pendingFee += e.broker
-        continue
-      }
-      if (e.kind === 'buy') {
-        e.broker += pendingFee
+      } else if (e.kind === 'buy') {
+        push(e, e.shares, e.gross, e.broker + pendingFee, e.tax)
         pendingFee = 0
-        held += e.shares
-        cost += e.gross + e.broker + e.tax
-        period.push(e)
       } else if (e.kind === 'sell') {
-        const sold = Math.abs(e.shares)
-        if (held > DUST) cost -= (cost / held) * Math.min(sold, held)
-        held -= sold
-      } else {
-        // Free shares and their cancellations: quantity only, no cost.
-        held += e.shares
-      }
-      if (held <= DUST) {
-        held = 0
-        cost = 0
-        period = []
+        sales++
+        push(e, -Math.abs(e.shares), e.gross, e.broker, e.tax)
       }
     }
 
-    // The file books some corporate actions after the sale that closed the
-    // line; what counts is the net of every movement.
-    const net = list.reduce((sum, e) => sum + e.shares, 0)
-    if (net <= DUST || !period.length) {
-      if (list.some((e) => e.kind === 'buy')) closed++
-      continue
-    }
-    held = Math.min(held, net)
-
-    const bought = period.reduce((s, e) => s + e.shares, 0)
-    const paid = period.reduce((s, e) => s + e.gross + e.broker + e.tax, 0)
-    const qtyShare = held / bought
-    const costShare = paid > 0 ? cost / paid : 0
-    for (const e of period) {
-      const quantity = e.shares * qtyShare
-      const brokerFeesEUR = e.broker * costShare
-      const feesEUR = (e.broker + e.tax) * costShare
-      const grossLocal = e.gross * costShare
-      const amountEUR = grossLocal + feesEUR
-      transactions.push({
-        id: makeTransactionId({
-          account: 'traderepublic',
-          orderRef: e.ref,
-          date: e.date,
-          time: e.time,
-          isin: e.isin,
-          quantity,
-          price: e.price,
-          amountEUR,
-        }),
-        account: 'traderepublic',
-        date: e.date,
-        time: e.time,
-        isin: e.isin,
-        productName: e.name,
-        quantity,
-        price: e.price,
-        currency: 'EUR',
-        grossLocal,
-        amountEUR,
-        brokerFeesEUR,
-        fxFeesEUR: 0,
-        feesEUR,
-        orderRef: e.ref,
-        source: fileName,
-      })
-    }
+    // Free shares come with cancellations booked out of order, some after the
+    // sale that closed the line: only their net counts, as a free buy on the
+    // day of the first grant.
+    const actions = list.filter((e) => e.kind === 'adjust')
+    const net = actions.reduce((sum, e) => sum + e.shares, 0)
+    const grant = actions.find((e) => e.shares > 0)
+    if (net > DUST && grant) push(grant, net, 0, 0, 0)
   }
 
   const s = (n: number) => (n > 1 ? 's' : '')
   const warnings: string[] = []
   if (sales) {
-    warnings.push(
-      `${fileName} : ${sales} vente${s(sales)} prise${s(sales)} en compte : seuls les titres encore détenus sont gardés, au prix de revient moyen${
-        closed ? ` (${closed} titre${s(closed)} entièrement vendu${s(closed)})` : ''
-      }.`
-    )
+    warnings.push(`${fileName} : ${sales} vente${s(sales)} prise${s(sales)} en compte.`)
   }
   if (dividends) {
     warnings.push(`${fileName} : ${dividends} dividende${s(dividends)} ignoré${s(dividends)}.`)
@@ -213,5 +175,8 @@ export function parseTradeRepublicCsv(csvText: string, fileName: string): ParseR
     `${fileName} : le compte espèces (virements, intérêts, carte) n'est pas suivi.`
   )
 
-  return { transactions: sortTransactionsDesc(transactions), warnings, supersedes: covered }
+  // Older versions of this parser stored scaled-down buys; this file's lines
+  // replace them.
+  const supersedes = [...new Set(events.map((e) => e.ref))]
+  return { transactions: sortTransactionsDesc(transactions), warnings, supersedes }
 }

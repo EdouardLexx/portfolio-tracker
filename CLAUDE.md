@@ -16,6 +16,8 @@ Fonctionnalités réellement présentes :
   Ledger Live, CSV compte Boursorama) et saisie manuelle (or, cash, versements Livret A) ;
 - déduplication à l'import, historique cumulatif ;
 - valorisation multi-devises via Yahoo Finance ;
+- ventes (DEGIRO, Trade Republic) au prix moyen pondéré, plus-values réalisées
+  comptées dans le gain ;
 - performance TWR comparée au S&P 500 et au Nasdaq 100 ;
 - courbes de valeur, répartition, frais, projection à 10 ans ;
 - thème clair/sombre ;
@@ -118,12 +120,13 @@ pas chargé).
 Règles réellement implémentées. Toute modification ici change des chiffres
 affichés : vérifier avant de toucher.
 
-- **Achats seulement.** Ventes et sorties sont détectées, signalées à l'import
-  puis **ignorées** : DEGIRO `quantité < 0`, PDF « VENTE COMPTANT », Ledger
-  `OUT` et opérations non confirmées. **Exception, Trade Republic** : son
-  parseur déduit les ventes au prix moyen pondéré et ne rend que les achats
-  encore détenus (toujours des achats pour le reste de l'appli) ; un nouvel
-  export remplace les lignes de l'ancien (`supersedes`).
+- **Ventes** (DEGIRO, Trade Republic) : `Transaction` à **quantité négative**,
+  `amountEUR` = − produit net des frais de vente. Les positions sortent les
+  titres au **prix moyen pondéré** (`replayLines`, ordre chronologique) ; la
+  plus-value réalisée, nette de frais, entre dans le **gain total** (latent +
+  réalisé), rapporté au total des achats. Encore **ignorés** : avis PDF
+  « VENTE COMPTANT » du PEA, `OUT` Ledger, opérations non confirmées. Un
+  retrait de Livret A ou de cash n'est pas une vente (quantité 1).
 - **Prix de revient** = `amountEUR`, en euros historiques réels.
   **L'inclusion des frais diffère selon la source** (voir `docs/ARCHITECTURE.md`,
   section Frais) : DEGIRO les **exclut**, PEA et Ledger les **incluent**.

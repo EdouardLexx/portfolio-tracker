@@ -87,7 +87,7 @@ const FILE_SOURCES = [
     source: 'Compte-titres DEGIRO',
     format: 'CSV',
     file: 'Export « Transactions », avec l’interface DEGIRO en français.',
-    note: 'Les ventes sont ignorées.',
+    note: 'Ventes prises en compte, au prix de revient moyen pondéré.',
   },
   {
     account: 'traderepublic',
@@ -95,7 +95,7 @@ const FILE_SOURCES = [
     source: 'Compte-titres Trade Republic',
     format: 'CSV',
     file: 'Export des transactions (« Transaction export »), idéalement tout l’historique.',
-    note: 'Seuls les titres encore détenus sont gardés, au prix de revient moyen. Dividendes et compte espèces ignorés.',
+    note: 'Ventes prises en compte, au prix de revient moyen pondéré. Dividendes et compte espèces ignorés.',
   },
   {
     account: 'pea',
@@ -153,7 +153,7 @@ const MANUAL_SOURCES = [
 ]
 
 const NOT_SUPPORTED_YET =
-  'ventes et retraits de titres (sauf Trade Republic), dividendes, autres courtiers, assurance-vie, immobilier et prêts immobiliers, remboursements anticipés, comptes courants.'
+  'ventes du PEA Boursorama (avis PDF), retraits de titres, dividendes, autres courtiers, assurance-vie, immobilier et prêts immobiliers, remboursements anticipés, comptes courants.'
 
 function SupportedData() {
   const rowClass =
@@ -643,7 +643,10 @@ export function DataPage({
             ['Lignes', String(transactions.length)],
             ['Ordres', String(orders)],
             ['Titres', String(positions.length)],
-            ['Investi', formatEUR(invested)],
+            [
+              transactions.some((tx) => tx.quantity < 0) ? 'Investi, net des ventes' : 'Investi',
+              formatEUR(invested),
+            ],
           ].map(([label, value]) => (
             <div key={label} className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
               <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">{label}</p>
@@ -984,6 +987,11 @@ function TransactionBrowser({
                             <span className="font-medium text-gray-900 dark:text-gray-100">
                               {labelOf(tx)}
                             </span>
+                            {tx.quantity < 0 && (
+                              <span className="ml-2 text-xs px-1.5 py-0.5 rounded bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-300">
+                                Vente
+                              </span>
+                            )}
                             <span className="text-xs text-gray-400 dark:text-gray-500 ml-2">
                               {tx.productName}
                             </span>
@@ -997,7 +1005,8 @@ function TransactionBrowser({
                               : formatMoney(tx.price, tx.currency)}
                           </td>
                           <td className="py-2 text-right text-gray-900 dark:text-gray-100 tabular-nums whitespace-nowrap">
-                            {formatEUR(tx.interestEUR ?? tx.amountEUR)}
+                            {/* A sale shows what it brought in, net of fees. */}
+                            {formatEUR(tx.interestEUR ?? Math.abs(tx.amountEUR))}
                           </td>
                           <td className="py-2 text-xs text-gray-400 dark:text-gray-500 max-w-[200px] truncate">
                             {tx.source}

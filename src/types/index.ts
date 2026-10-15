@@ -137,7 +137,10 @@ export interface Position {
 
 export interface PortfolioSummary {
   totalValueEUR: number
+  /** Cost of what is still held. */
   totalCostEUR: number
+  /** Net proceeds of sales minus the average cost of what was sold. */
+  realizedPnlEUR: number
   totalFeesEUR: number
   brokerFeesEUR: number
   fxFeesEUR: number

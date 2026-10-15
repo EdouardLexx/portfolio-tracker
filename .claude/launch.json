@@ -20,6 +20,14 @@
         "--strictPort"
       ],
       "port": 5174
+    },
+    {
+      "name": "api",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "server.js"
+      ],
+      "port": 3001
     }
   ]
 }

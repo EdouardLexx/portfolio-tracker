@@ -164,6 +164,11 @@ GitHub les accepte ; à monter de version à la prochaine alerte de la CI.
 
 Du plus récent au plus ancien.
 
+- **Ventes** (DEGIRO, Trade Republic) : une vente est une transaction à
+  quantité négative ; les positions la sortent au prix moyen pondéré, la
+  plus-value réalisée (nette de frais) entre dans le gain total, la TWR et la
+  courbe de patrimoine la traitent comme une sortie d'argent. Vérifié sur les
+  vrais exports (hors dépôt) et sur des cas fictifs dont le résultat est connu.
 - **Demande d'ajout d'une banque** (page Données) : extrait anonymisé dans le
   navigateur, relu, puis ticket GitHub prérempli. Anonymisation vérifiée sur un
   vrai export (ni nom, ni IBAN, ni ISIN, ni montant ne ressort).
@@ -238,4 +243,4 @@ Ordre logique, sans engagement :
    fichier de sauvegarde (**fait**), synchronisation Google Drive (**codée**,
    à configurer), interface en ligne sur GitHub Pages pour le téléphone (voir
    `docs/TODO.md`).
-4. Gérer les ventes et sorties, aujourd'hui ignorées.
+4. Ventes du PEA Boursorama (avis PDF) : attendre un exemple réel.

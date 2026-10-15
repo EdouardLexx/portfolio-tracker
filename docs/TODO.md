@@ -55,13 +55,15 @@ de confidentialité (`confidentialite.html`), domaine `edouardlexx.github.io`
 vérifié dans Google Search Console (fichier HTML à déposer dans `public/`).
 Voir `docs/GOOGLE_DRIVE.md`.
 
-### Gérer les ventes et les sorties
-*Fonctionnalité planifiée.*
-Aujourd'hui détectées, signalées puis ignorées. Les chiffres deviendront faux dès
-la première vente.
-Travail : suivi des lots (FIFO ou PRU) dans `buildPositions`, distinction
-plus-value réalisée / latente, traitement des `OUT` Ledger et des retraits.
-Fichiers : `src/utils/calculations.ts`, les trois parseurs concernés.
+### Ventes : ce qui reste
+Les ventes DEGIRO et Trade Republic sont gérées (prix moyen pondéré, plus-value
+réalisée nette de frais, comptée dans le gain). Restent :
+- les avis de **vente** du PEA Boursorama (PDF) : encore ignorés, faute d'un
+  exemple réel pour en lire les totaux sans deviner ;
+- les `OUT` Ledger : des envois, pas forcément des ventes ; toujours ignorés ;
+- le pourcentage de Patrimoine (« de l'apport ») divise par l'apport **net**
+  des ventes, celui d'Investissements par le total des achats : après de
+  grosses ventes, les deux diffèrent. Choisir une base commune avec l'auteur.
 
 ## 🟡 Medium
 

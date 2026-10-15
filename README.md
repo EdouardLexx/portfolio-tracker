@@ -111,17 +111,17 @@ connexion dure environ une heure, puis un clic sur « Drive : se connecter »
 (barre latérale) la renouvelle. Configuration côté Google (une fois, pour qui
 compile l'application) : [`docs/GOOGLE_DRIVE.md`](docs/GOOGLE_DRIVE.md).
 
-**Limite importante** : les ventes ne sont pas encore prises en compte (sauf
-dans l'export Trade Republic). Si vous avez déjà vendu des titres, les chiffres
-affichés seront faux. Cet outil ne
+**Limite importante** : les ventes sont prises en compte pour DEGIRO et Trade
+Republic, pas encore pour les avis PDF du PEA Boursorama : une vente sur ce PEA
+fausse les chiffres. Cet outil ne
 constitue pas un conseil en investissement.
 
 Sources reconnues :
 
 | Compte | Format | Fichier | À savoir |
 |---|---|---|---|
-| CTO DEGIRO | CSV | export « Transactions » | interface DEGIRO en français ; ventes ignorées |
-| CTO Trade Republic | CSV | export des transactions (« Transaction export ») | ventes déduites : seuls les titres encore détenus restent, au prix de revient moyen ; dividendes et compte espèces ignorés |
+| CTO DEGIRO | CSV | export « Transactions » | interface DEGIRO en français ; ventes prises en compte |
+| CTO Trade Republic | CSV | export des transactions (« Transaction export ») | ventes prises en compte ; dividendes et compte espèces ignorés |
 | PEA Boursorama | PDF | avis d'opéré (« OPERATION DE BOURSE »), un par exécution | ventes ignorées ; pas encore les avis d'un compte-titres Boursorama |
 | Crypto Ledger | CSV | export « operations » de Ledger Live | réceptions confirmées seulement ; envois ignorés |
 | Livret A | CSV | export « opérations » Boursorama du livret | relevé du Livret A uniquement |
@@ -422,9 +422,9 @@ dans `docs/TODO.md`.
 ## Limites connues
 
 - Les dividendes ne sont pas suivis : les relevés de transactions ne les contiennent pas.
-- **Seuls les achats sont gérés.** Une vente est détectée et signalée à l'import,
-  mais ignorée : la traiter demanderait de suivre les lots (FIFO/PRU) dans
-  `buildPositions`.
+- **Ventes** : une vente sort les titres au prix de revient moyen pondéré ; sa
+  plus-value, nette des frais de vente, entre dans le gain total. Gérées pour
+  DEGIRO et Trade Republic, pas encore pour les avis PDF de vente du PEA.
 - Yahoo Finance est une API non officielle, sans garantie de disponibilité.
 - Les données sont stockées dans le `localStorage` du navigateur : elles sont
   propres à ce navigateur et disparaissent si l'on efface les données du site.

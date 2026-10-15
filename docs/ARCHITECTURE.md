@@ -125,6 +125,28 @@ en premier, pour qu'une vente ou un dividende rare apparaisse.
 ticket GitHub prérempli (lien raccourci sous 7 500 caractères en retirant des
 lignes).
 
+### Ventes
+
+Une vente est une `Transaction` à **quantité négative**. `amountEUR` vaut
+**moins** le produit net des frais de vente (ce qui sort du portefeuille),
+`grossLocal` moins le brut ; les frais restent positifs dans `brokerFeesEUR` /
+`fxFeesEUR`. Ainsi :
+- `buildPositions` (`replayLines`, ordre chronologique) sort les titres vendus
+  au **prix moyen pondéré** de la ligne ; `realizedEUR` = produit net − coût
+  moyen des titres vendus. Une ligne soldée disparaît des positions ; une
+  vente au-delà des achats connus (export partiel) ne sort que ce qui est
+  connu.
+- `buildSummary` : gain = valeur − coût restant + réalisé ; pourcentage et
+  CAGR rapportés au **total des achats** (coût restant + coût des titres
+  vendus).
+- TWR (`performance.ts`) et courbe (`wealthSeries.ts`) : la vente est un flux
+  négatif ; une période où tout est vendu se clôt sur ce flux et repart au
+  prochain achat. Les quantités ne descendent jamais sous zéro.
+- `summarisePerAccount` : `costEUR` = apport net (achats − ventes), la valeur
+  d'une ligne commune à deux comptes se répartit selon les titres détenus.
+- Livret A et cash gardent leur quantité 1 par mouvement : un retrait n'est
+  pas une vente.
+
 ### Frais : traitement réellement différent selon la source
 
 C'est le point le plus important à connaître avant de toucher aux chiffres.
@@ -133,7 +155,7 @@ C'est le point le plus important à connaître avant de toucher aux chiffres.
 |---|---|---|
 | DEGIRO | colonne 11 « Montant EUR » (brut converti) | **non** |
 | PEA (PDF) | montant net débité | **oui** |
-| Trade Republic | montant + frais + taxe, au prorata de ce qui est encore détenu | **oui** |
+| Trade Republic | montant + frais + taxe | **oui** |
 | Ledger | `costEUR + feesEUR` | **oui** (rangés dans `fxFeesEUR`) |
 | Or | `prix unitaire × quantité` | sans objet (frais = 0) |
 | Livret A / cash | montant du mouvement | sans objet (frais = 0) |
@@ -144,21 +166,20 @@ rapport au PEA, puisque ses frais ne pèsent pas sur le coût. L'écart est faib
 
 ### Particularités par source
 
-- **Trade Republic** : l'export mêle titres et compte espèces, ventes
-  comprises. Le parseur rejoue chaque titre dans l'ordre (`datetime`) au prix
-  moyen pondéré et ne rend que les achats depuis la dernière clôture de la
-  ligne, réduits à la quantité encore détenue et à son coût restant. Le net de
-  tous les mouvements tranche en dernier : l'export inscrit des actions
-  gratuites et leurs annulations après la vente qui a soldé la ligne. Le frais
-  de souscription d'une introduction en bourse (`IPO_SUBSCRIPTION`) va à
-  l'achat qui suit. Le résultat porte `supersedes` (les `transaction_id` des
-  achats du fichier) : à l'import, les lignes Trade Republic de même référence
-  que le fichier ne rend plus telles quelles sont retirées, si bien qu'un
-  export plus récent, après une vente, remplace l'ancien au lieu de s'y
-  ajouter. Prix et coût en euros (Trade Republic exécute en euros) ; pour une
+- **Trade Republic** : l'export mêle titres et compte espèces. Achats et
+  ventes passent tels quels (voir Ventes). Les actions gratuites et leurs
+  annulations, inscrites dans le désordre (parfois après la vente qui a soldé
+  la ligne), se résument en un seul achat gratuit de leur net, daté de la
+  première attribution. Le frais de souscription d'une introduction en bourse
+  (`IPO_SUBSCRIPTION`) va à l'achat qui suit. Le résultat porte `supersedes`
+  (les `transaction_id` du fichier) : à l'import, les lignes Trade Republic de
+  même référence que le fichier ne rend plus telles quelles sont remplacées
+  (les anciennes versions du parseur stockaient des achats réduits). Prix et coût en euros (Trade Republic exécute en euros) ; pour une
   action cotée en dollars, le PRU en devise des positions est alors le coût en
   euros au taux du jour (`calculations.ts`).
 
+- **DEGIRO** : une quantité négative est une vente ; son produit net est
+  « Montant EUR » moins frais AutoFX et courtage.
 - **Boursorama PDF** : le bloc des totaux imprime tous les libellés puis toutes
   les valeurs ; `readTotals` lit donc la séquence de valeurs et déduit
   `frais = net − brut`. L'heure d'exécution est optionnelle dans la regex, car

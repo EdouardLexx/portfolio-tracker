@@ -613,7 +613,10 @@ réécriture, avec un compte GitHub.
   et la page `public/confidentialite.html` sert de règles de confidentialité à
   l'écran de consentement Google.
 
-## Trade Republic : les ventes déduites dans le parseur
+## Trade Republic : les ventes déduites dans le parseur (remplacée)
+
+> Remplacée par « Ventes gérées dans le modèle » ci-dessous : Trade Republic
+> passe ses ventes telles quelles, comme DEGIRO.
 
 ### Decision
 L'export Trade Republic est lu par `src/parsers/tradeRepublicCsv.ts`. Les
@@ -684,3 +687,37 @@ et Claude Code lit les tickets directement.
 - L'anonymisation est une heuristique : la relecture par l'expéditeur fait
   partie du processus, d'où l'extrait modifiable et l'avertissement.
 - CSV seulement ; un PDF se décrit dans le commentaire.
+
+## Ventes gérées dans le modèle, au prix moyen pondéré
+
+### Decision
+Une vente est une `Transaction` à quantité négative dont `amountEUR` vaut moins
+le produit net des frais. `buildPositions` rejoue chaque ligne dans l'ordre et
+sort les titres vendus au prix moyen pondéré ; la plus-value réalisée, nette
+des frais de vente, s'ajoute au gain total (« Gain total = latent + réalisé »),
+rapporté au total des achats. DEGIRO et Trade Republic passent leurs ventes
+ainsi. Choix de l'auteur : prix moyen pondéré plutôt que FIFO, frais déduits,
+pas de carte ni de liste dédiée aux ventes pour l'instant.
+
+### Reason
+Déduire les ventes dans le parseur (première version Trade Republic) ne marche
+pas pour DEGIRO, dont les exports couvrent une période : l'achat et la vente
+d'un titre peuvent tomber dans deux fichiers. Dans le modèle, la vente se
+rapproche de tous les achats importés. Le reste suit sans réécriture : TWR,
+courbe de patrimoine et rendement annualisé traitaient déjà des flux négatifs
+(retraits de cash).
+
+### Alternatives
+- FIFO : écarté par l'auteur ; le prix moyen pondéré est la règle fiscale du
+  CTO et du PEA en France.
+- Plus-value brute, frais de vente à part : écarté.
+- Garder la déduction à l'import pour Trade Republic : écarté, une seule règle
+  pour tous.
+
+### Consequence
+- Format de sauvegarde inchangé (champs identiques, quantité négative déjà
+  valide) ; une ancienne version de l'appli lirait une vente comme un achat
+  négatif, juste en quantité, faux en coût.
+- Un export Trade Republic importé avec l'ancienne version est remplacé par le
+  nouvel import (`supersedes`).
+- Les avis PDF de vente du PEA restent ignorés jusqu'à un exemple réel.

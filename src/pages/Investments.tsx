@@ -79,14 +79,18 @@ export function InvestmentsPage({
           subtitleColor="text-gray-500 dark:text-gray-400"
         />
         <ValueCard
-          title="Plus-values latentes"
+          title={summary.realizedPnlEUR ? 'Plus-values' : 'Plus-values latentes'}
           mainValue={`${summary.totalPnlPercent >= 0 ? '+' : ''}${formatNumber(summary.totalPnlPercent)}%`}
           mainColor={
             summary.totalPnlPercent >= 0
               ? 'text-emerald-600 dark:text-emerald-400'
               : 'text-red-500 dark:text-red-400'
           }
-          subtitle={`Frais totaux: ${formatEUR(summary.totalFeesEUR)}`}
+          subtitle={
+            summary.realizedPnlEUR
+              ? `dont ${formatEUR(summary.realizedPnlEUR)} réalisés · frais ${formatEUR(summary.totalFeesEUR)}`
+              : `Frais totaux: ${formatEUR(summary.totalFeesEUR)}`
+          }
         />
       </div>
 

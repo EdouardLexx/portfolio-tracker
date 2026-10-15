@@ -485,7 +485,7 @@ export function usePortfolio(scope: Scope) {
               ? `Aucune nouveauté : les ${duplicates} transaction${s(duplicates)} lue${s(duplicates)} étaient déjà enregistrées.`
               : 'Aucun titre encore détenu dans ce fichier.') +
           (replaced
-            ? ` ${replaced} ligne${s(replaced)} retirée${s(replaced)} ou mise${s(replaced)} à jour après des ventes.`
+            ? ` ${replaced} ancienne${s(replaced)} ligne${s(replaced)} remplacée${s(replaced)} par la version du fichier.`
             : ''),
       }
     },
