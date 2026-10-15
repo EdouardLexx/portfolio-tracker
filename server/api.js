@@ -88,12 +88,23 @@ function tooMany(res, list) {
 }
 
 /**
- * Share classes Yahoo's ISIN search does not index. Without these, a Class A
- * and a Class C line are indistinguishable from the product name alone.
+ * Listings Yahoo's ISIN search does not index. Without these, a Class A and a
+ * Class C line are indistinguishable from the product name alone, and a GDR
+ * would fall back by name onto the ordinary share, at another ratio.
  */
 const ISIN_OVERRIDES = {
   US02079K3059: 'GOOGL',
   US02079K1079: 'GOOG',
+  // SK hynix GDR, quoted in euros in Frankfurt (SKHY is not the same paper).
+  US78392B1070: 'HY9H.F',
+}
+
+/**
+ * German listings pad their names to a fixed width and append the share type:
+ * "SK Hynix Inc.                 R" → "SK Hynix Inc.".
+ */
+function tidyName(name) {
+  return typeof name === 'string' ? name.replace(/\s{2,}\S{0,3}$/, '').trim() : name
 }
 
 /** "ALPHABET INC. CLASS A" → "ALPHABET INC": Yahoo matches plain names only. */
@@ -135,7 +146,7 @@ app.get('/api/resolve', async (req, res) => {
               isin,
               symbol,
               currency: q?.currency ?? null,
-              name: q?.shortName || q?.longName || symbol,
+              name: tidyName(q?.shortName || q?.longName || symbol),
             }
           }
 
@@ -177,7 +188,7 @@ app.get('/api/resolve', async (req, res) => {
             /* symbol still usable without the extra detail */
           }
 
-          return { isin, symbol: best.symbol, currency, name }
+          return { isin, symbol: best.symbol, currency, name: tidyName(name) }
         })
       )
     )
@@ -252,7 +263,7 @@ app.get('/api/quotes', async (req, res) => {
             change: q.regularMarketChange,
             changePercent: q.regularMarketChangePercent,
             marketCap: q.marketCap,
-            name: q.shortName || q.longName,
+            name: tidyName(q.shortName || q.longName),
           }
         }
         return null
@@ -345,7 +356,7 @@ app.get('/api/instrument', async (req, res) => {
     if (!q) return res.status(404).json({ error: 'symbole inconnu' })
     res.json({
       symbol,
-      name: q.longName || q.shortName || symbol,
+      name: tidyName(q.longName || q.shortName || symbol),
       exchange: q.fullExchangeName ?? null,
       timezone: q.exchangeTimezoneName ?? 'UTC',
       quoteType: q.quoteType ?? null,
